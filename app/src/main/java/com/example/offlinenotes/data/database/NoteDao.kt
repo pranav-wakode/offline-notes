@@ -25,4 +25,3 @@ interface NoteDao {
     @Query("SELECT * FROM notes_table WHERE id = :noteId")
     fun getNoteById(noteId: Int): LiveData<Note>
 }
-b. DatabaseThis is the main Room Database class.

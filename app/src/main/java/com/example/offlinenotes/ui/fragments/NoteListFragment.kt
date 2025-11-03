@@ -94,4 +94,3 @@ class NoteListFragment : Fragment() {
         super.onCreateOptionsMenu(menu, inflater)
     }
 }
-c. NoteEditorFragment (Create/Edit Screen)Displays the editor for a single note.

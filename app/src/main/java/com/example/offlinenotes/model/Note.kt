@@ -16,4 +16,3 @@ data class Note(
     val color: Int = -1, // Optional: For color-coding
     val isPinned: Boolean = false // Optional: For pinning
 ) : Serializable // Serializable to pass between fragments
-3. Data Layer (Room Database)This layer handles all data persistence.a. DAO (Data Access Object)This interface defines all the database operations (CRUD).

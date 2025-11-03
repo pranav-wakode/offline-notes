@@ -18,4 +18,3 @@ class NoteViewModelFactory(
         throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
-b. NoteViewModelThe main ViewModel for the app.

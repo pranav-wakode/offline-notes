@@ -36,4 +36,3 @@ class NoteViewModel(application: Application, private val repository: NoteReposi
         repository.delete(note)
     }
 }
-6. UI Layer (View)This includes the Activity, Fragments, and RecyclerView Adapter.a. RecyclerView AdapterManages the list/grid of notes.

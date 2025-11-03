@@ -30,4 +30,3 @@ abstract class NoteDatabase : RoomDatabase() {
         }
     }
 }
-4. Repository LayerThis abstracts the data source (the database) from the ViewModels.

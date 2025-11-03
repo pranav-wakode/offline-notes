@@ -30,4 +30,3 @@ class MainActivity : AppCompatActivity() {
         return navController.navigateUp() || super.onSupportNavigateUp()
     }
 }
-7. Resource Files (XML)a. Layouts

@@ -55,4 +55,3 @@ class NoteAdapter(private val listener: (Note) -> Unit) : ListAdapter<Note, Note
         }
     }
 }
-b. NoteListFragment (Main Screen)Displays the list of notes, the search bar, and the FAB.

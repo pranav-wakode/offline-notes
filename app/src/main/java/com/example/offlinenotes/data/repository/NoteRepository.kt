@@ -28,4 +28,3 @@ class NoteRepository(private val noteDao: NoteDao) {
         return noteDao.getNoteById(noteId)
     }
 }
-5. ViewModel LayerThis layer holds the UI logic and data, surviving configuration changes.a. ViewModelFactoryThis factory is necessary to pass the Application context (needed for the repository) into the ViewModel.

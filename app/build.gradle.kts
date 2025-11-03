@@ -1,8 +1,13 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    // Kapt for Room annotation processing
-    id("kotlin-kapt")
+    
+    // REMOVED: Kapt is not compatible with Gradle 9.0
+    // id("kotlin-kapt") 
+    
+    // ADDED: Use KSP instead
+    id("com.google.devtools.ksp")
+
     // Safe Args for Navigation component
     id("androidx.navigation.safeargs.kotlin")
 }
@@ -60,7 +65,9 @@ dependencies {
     val roomVersion = "2.6.0"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion") // For Coroutines support
-    kapt("androidx.room:room-compiler:$roomVersion")
+    
+    // CHANGED: Use 'ksp' instead of 'kapt'
+    ksp("androidx.room:room-compiler:$roomVersion") 
 
     // ViewModel and LiveData
     val lifecycleVersion = "2.6.2"

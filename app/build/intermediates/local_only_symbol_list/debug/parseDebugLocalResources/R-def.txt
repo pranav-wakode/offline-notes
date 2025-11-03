@@ -1,0 +1,34 @@
+R_DEF: Internal format may change without notice
+local
+anim slide_in_left
+anim slide_in_right
+anim slide_out_left
+anim slide_out_right
+drawable ic_add
+drawable ic_delete
+drawable ic_save
+drawable ic_search
+id action_delete
+id action_noteListFragment_to_noteEditorFragment
+id action_search
+id et_note_content
+id et_note_title
+id fab_add_note
+id fab_save
+id nav_graph
+id nav_host_fragment
+id noteEditorFragment
+id noteListFragment
+id note_card
+id recycler_view
+id toolbar
+id tv_note_content_preview
+id tv_note_date
+id tv_note_title
+layout activity_main
+layout fragment_note_editor
+layout fragment_note_list
+layout note_item
+menu editor_menu
+menu list_menu
+navigation nav_graph

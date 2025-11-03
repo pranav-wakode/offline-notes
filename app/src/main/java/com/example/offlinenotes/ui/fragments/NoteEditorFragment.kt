@@ -119,4 +119,3 @@ class NoteEditorFragment : Fragment() {
         }
     }
 }
-d. MainActivity (The Single Activity Host)This activity hosts the Navigation Component NavHostFragment.

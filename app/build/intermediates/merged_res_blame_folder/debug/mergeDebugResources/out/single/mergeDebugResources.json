@@ -1,0 +1,62 @@
+[
+    {
+        "merged": "com.example.offlinenotes.app-debug-52:/menu_list_menu.xml.flat",
+        "source": "com.example.offlinenotes.app-main-54:/menu/list_menu.xml"
+    },
+    {
+        "merged": "com.example.offlinenotes.app-debug-52:/drawable_ic_search.xml.flat",
+        "source": "com.example.offlinenotes.app-main-54:/drawable/ic_search.xml"
+    },
+    {
+        "merged": "com.example.offlinenotes.app-debug-52:/navigation_nav_graph.xml.flat",
+        "source": "com.example.offlinenotes.app-main-54:/navigation/nav_graph.xml"
+    },
+    {
+        "merged": "com.example.offlinenotes.app-debug-52:/anim_slide_out_right.xml.flat",
+        "source": "com.example.offlinenotes.app-main-54:/anim/slide_out_right.xml"
+    },
+    {
+        "merged": "com.example.offlinenotes.app-debug-52:/layout_fragment_note_list.xml.flat",
+        "source": "com.example.offlinenotes.app-main-54:/layout/fragment_note_list.xml"
+    },
+    {
+        "merged": "com.example.offlinenotes.app-debug-52:/layout_fragment_note_editor.xml.flat",
+        "source": "com.example.offlinenotes.app-main-54:/layout/fragment_note_editor.xml"
+    },
+    {
+        "merged": "com.example.offlinenotes.app-debug-52:/layout_activity_main.xml.flat",
+        "source": "com.example.offlinenotes.app-main-54:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.example.offlinenotes.app-debug-52:/drawable_ic_add.xml.flat",
+        "source": "com.example.offlinenotes.app-main-54:/drawable/ic_add.xml"
+    },
+    {
+        "merged": "com.example.offlinenotes.app-debug-52:/anim_slide_in_right.xml.flat",
+        "source": "com.example.offlinenotes.app-main-54:/anim/slide_in_right.xml"
+    },
+    {
+        "merged": "com.example.offlinenotes.app-debug-52:/anim_slide_out_left.xml.flat",
+        "source": "com.example.offlinenotes.app-main-54:/anim/slide_out_left.xml"
+    },
+    {
+        "merged": "com.example.offlinenotes.app-debug-52:/anim_slide_in_left.xml.flat",
+        "source": "com.example.offlinenotes.app-main-54:/anim/slide_in_left.xml"
+    },
+    {
+        "merged": "com.example.offlinenotes.app-debug-52:/menu_editor_menu.xml.flat",
+        "source": "com.example.offlinenotes.app-main-54:/menu/editor_menu.xml"
+    },
+    {
+        "merged": "com.example.offlinenotes.app-debug-52:/layout_note_item.xml.flat",
+        "source": "com.example.offlinenotes.app-main-54:/layout/note_item.xml"
+    },
+    {
+        "merged": "com.example.offlinenotes.app-debug-52:/drawable_ic_save.xml.flat",
+        "source": "com.example.offlinenotes.app-main-54:/drawable/ic_save.xml"
+    },
+    {
+        "merged": "com.example.offlinenotes.app-debug-52:/drawable_ic_delete.xml.flat",
+        "source": "com.example.offlinenotes.app-main-54:/drawable/ic_delete.xml"
+    }
+]
