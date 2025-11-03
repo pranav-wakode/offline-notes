@@ -5,7 +5,10 @@ import android.view.*
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -17,7 +20,8 @@ import com.example.offlinenotes.ui.viewmodel.NoteViewModel
 import com.example.offlinenotes.ui.viewmodel.NoteViewModelFactory
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
-class NoteEditorFragment : Fragment() {
+// Implement the MenuProvider interface
+class NoteEditorFragment : Fragment(), MenuProvider {
 
     private lateinit var noteViewModel: NoteViewModel
     private val args: NoteEditorFragmentArgs by navArgs()
@@ -54,8 +58,15 @@ class NoteEditorFragment : Fragment() {
             saveNote()
         }
         
-        setHasOptionsMenu(true) // Enable options menu (for delete)
+        // We removed setHasOptionsMenu(true) from here
         return view
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        // Add the MenuProvider
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 
     private fun saveNote() {
@@ -102,20 +113,21 @@ class NoteEditorFragment : Fragment() {
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+    // This is the new, required method from MenuProvider
+    override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
         if (currentNote != null) {
-            inflater.inflate(R.menu.editor_menu, menu)
+            menuInflater.inflate(R.menu.editor_menu, menu)
         }
-        super.onCreateOptionsMenu(menu, inflater)
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
+    // This is the new, required method from MenuProvider
+    override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+        return when (menuItem.itemId) {
             R.id.action_delete -> {
                 deleteNote()
                 true
             }
-            else -> super.onOptionsItemSelected(item)
+            else -> false
         }
     }
 }

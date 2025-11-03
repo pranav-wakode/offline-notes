@@ -3,7 +3,10 @@ package com.example.offlinenotes.ui.fragments
 import android.os.Bundle
 import android.view.*
 import androidx.appcompat.widget.SearchView
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
@@ -16,7 +19,8 @@ import com.example.offlinenotes.ui.viewmodel.NoteViewModel
 import com.example.offlinenotes.ui.viewmodel.NoteViewModelFactory
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
-class NoteListFragment : Fragment() {
+// Implement the MenuProvider interface
+class NoteListFragment : Fragment(), MenuProvider {
 
     private lateinit var noteViewModel: NoteViewModel
     private lateinit var noteAdapter: NoteAdapter
@@ -52,8 +56,15 @@ class NoteListFragment : Fragment() {
             notes?.let { noteAdapter.submitList(it) }
         }
 
-        setHasOptionsMenu(true) // Enable options menu (for search)
+        // We removed setHasOptionsMenu(true) from here
         return view
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        // Add the MenuProvider
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 
     private fun setupRecyclerView() {
@@ -68,8 +79,9 @@ class NoteListFragment : Fragment() {
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.list_menu, menu)
+    // This is the new, required method from MenuProvider
+    override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+        menuInflater.inflate(R.menu.list_menu, menu)
         
         val searchItem = menu.findItem(R.id.action_search)
         val searchView = searchItem.actionView as SearchView
@@ -90,7 +102,11 @@ class NoteListFragment : Fragment() {
             noteViewModel.setSearchQuery("")
             false
         }
-        
-        super.onCreateOptionsMenu(menu, inflater)
+    }
+
+    // This is the new, required method from MenuProvider
+    override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+        // We don't have other items, so we just return false
+        return false
     }
 }

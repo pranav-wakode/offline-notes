@@ -1,14 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    
-    // REMOVED: Kapt is not compatible with Gradle 9.0
-    // id("kotlin-kapt") 
-    
-    // ADDED: Use KSP instead
     id("com.google.devtools.ksp")
-
-    // Safe Args for Navigation component
     id("androidx.navigation.safeargs.kotlin")
 }
 
@@ -36,11 +29,13 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        // Updated to Java 11
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        // Updated to Java 11
+        jvmTarget = "11"
     }
     // Enable ViewBinding
     buildFeatures {
@@ -65,8 +60,6 @@ dependencies {
     val roomVersion = "2.6.0"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion") // For Coroutines support
-    
-    // CHANGED: Use 'ksp' instead of 'kapt'
     ksp("androidx.room:room-compiler:$roomVersion") 
 
     // ViewModel and LiveData
