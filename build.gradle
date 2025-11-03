@@ -1,0 +1,18 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+plugins {
+    // Updated AGP to a more recent stable version
+    id 'com.android.application' version '8.4.1' apply false
+    
+    // Updated Kotlin plugin to a matching version
+    id 'org.jetbrains.kotlin.android' version '1.9.24' apply false
+    
+    // Updated KSP to a matching version
+    id 'com.google.devtools.ksp' version '1.9.24-1.0.20' apply false
+    
+    // Updated SafeArgs plugin
+    id 'androidx.navigation.safeargs.kotlin' version '2.7.7' apply false
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
