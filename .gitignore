@@ -1,0 +1,29 @@
+# Gradle
+.gradle/
+build/
+.gradletasknamecache/
+
+# Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+.DS_Store
+
+# Local configuration
+local.properties
+
+# Keystores (important for security)
+*.jks
+*.keystore
+
+# Build outputs
+*.apk
+*.aab
+captures/
+
+# Google Services (even though we don't use it)
+google-services.json
+
+# Local environment files
+.env
