@@ -4,6 +4,16 @@ anim slide_in_left
 anim slide_in_right
 anim slide_out_left
 anim slide_out_right
+color black
+color md_theme_dark_onPrimary
+color md_theme_dark_onPrimaryContainer
+color md_theme_dark_primary
+color md_theme_dark_primaryContainer
+color md_theme_light_onPrimary
+color md_theme_light_onPrimaryContainer
+color md_theme_light_primary
+color md_theme_light_primaryContainer
+color white
 drawable ic_add
 drawable ic_delete
 drawable ic_save
@@ -32,3 +42,5 @@ layout note_item
 menu editor_menu
 menu list_menu
 navigation nav_graph
+string app_name
+style Theme.OfflineNotesApp

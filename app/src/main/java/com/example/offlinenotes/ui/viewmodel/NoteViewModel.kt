@@ -1,7 +1,12 @@
 package com.example.offlinenotes.ui.viewmodel
 
 import android.app.Application
-import androidx.lifecycle.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+// Import the switchMap extension function
+import androidx.lifecycle.switchMap
+import androidx.lifecycle.viewModelScope
 import com.example.offlinenotes.data.repository.NoteRepository
 import com.example.offlinenotes.model.Note
 import kotlinx.coroutines.Dispatchers
@@ -12,7 +17,8 @@ class NoteViewModel(application: Application, private val repository: NoteReposi
     val allNotes: LiveData<List<Note>> = repository.allNotes
     private val searchQuery = MutableLiveData<String>("")
 
-    val searchedNotes: LiveData<List<Note>> = Transformations.switchMap(searchQuery) { query ->
+    // Use the modern 'switchMap' extension function directly on 'searchQuery'
+    val searchedNotes: LiveData<List<Note>> = searchQuery.switchMap { query ->
         if (query.isNullOrEmpty()) {
             repository.allNotes
         } else {
