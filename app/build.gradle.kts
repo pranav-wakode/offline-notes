@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.offlinenotes"
-        minSdk = 26 // Android 8.0
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -29,15 +29,12 @@ android {
         }
     }
     compileOptions {
-        // Updated to Java 11
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        // Updated to Java 11
         jvmTarget = "11"
     }
-    // Enable ViewBinding
     buildFeatures {
         viewBinding = true
     }
@@ -49,7 +46,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.10.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0") // For CoordinatorLayout
+    implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
 
     // Navigation Component
     val navVersion = "2.7.5"
@@ -59,15 +56,18 @@ dependencies {
     // Room Database
     val roomVersion = "2.6.0"
     implementation("androidx.room:room-runtime:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion") // For Coroutines support
-    ksp("androidx.room:room-compiler:$roomVersion") 
+    implementation("androidx.room:room-ktx:$roomVersion")
+    ksp("androidx.room:room-compiler:$roomVersion")
 
     // ViewModel and LiveData
     val lifecycleVersion = "2.6.2"
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
-    
+
+    // Gson for Import/Export
+    implementation("com.google.code.gson:gson:2.10.1")
+
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")

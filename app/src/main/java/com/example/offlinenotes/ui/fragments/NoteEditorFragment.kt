@@ -1,6 +1,8 @@
 package com.example.offlinenotes.ui.fragments
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.*
 import android.widget.EditText
 import android.widget.Toast
@@ -20,12 +22,11 @@ import com.example.offlinenotes.ui.viewmodel.NoteViewModel
 import com.example.offlinenotes.ui.viewmodel.NoteViewModelFactory
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
-// Implement the MenuProvider interface
 class NoteEditorFragment : Fragment(), MenuProvider {
 
     private lateinit var noteViewModel: NoteViewModel
     private val args: NoteEditorFragmentArgs by navArgs()
-    
+
     private var currentNote: Note? = null
     private lateinit var etTitle: EditText
     private lateinit var etContent: EditText
@@ -37,34 +38,83 @@ class NoteEditorFragment : Fragment(), MenuProvider {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_note_editor, container, false)
 
-        // Initialize ViewModel
         val database = NoteDatabase.getDatabase(requireContext())
         val repository = NoteRepository(database.getNoteDao())
         val factory = NoteViewModelFactory(requireActivity().application, repository)
         noteViewModel = ViewModelProvider(this, factory)[NoteViewModel::class.java]
-        
+
         etTitle = view.findViewById(R.id.et_note_title)
         etContent = view.findViewById(R.id.et_note_content)
         fabSave = view.findViewById(R.id.fab_save)
-        
+
         currentNote = args.note
 
         currentNote?.let {
             etTitle.setText(it.title)
             etContent.setText(it.content)
         }
-        
+
         fabSave.setOnClickListener {
             saveNote()
         }
-        
-        // We removed setHasOptionsMenu(true) from here
+
+        setupAutoBullets()
+
         return view
+    }
+
+    private fun setupAutoBullets() {
+        etContent.addTextChangedListener(object : TextWatcher {
+            private var previousText = ""
+            private var isFormatting = false
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                previousText = s.toString()
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                // No operation
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+                if (isFormatting || s == null) return
+
+                val text = s.toString()
+                // Detect if a newline was just added
+                if (text.length > previousText.length && text.endsWith("\n") && !previousText.endsWith("\n")) {
+                    isFormatting = true
+
+                    try {
+                        // Find the start and end of the line *before* the newline
+                        // The cursor is currently at the end (after \n)
+                        val cursorPosition = etContent.selectionStart
+                        val textBeforeCursor = text.substring(0, cursorPosition - 1) // Exclude the new \n
+                        val lastLineIndex = textBeforeCursor.lastIndexOf('\n') + 1
+
+                        // Get the content of the line just finished
+                        val lastLine = textBeforeCursor.substring(lastLineIndex)
+
+                        // If the line is not empty and doesn't already have a bullet
+                        if (lastLine.isNotBlank() && !lastLine.trimStart().startsWith("•")) {
+                            // Insert bullet at the start of that line
+                            s.insert(lastLineIndex, "• ")
+                        }
+
+                        // Optional: If you also want the NEW line to auto-start with a bullet
+                        // s.append("• ")
+
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    } finally {
+                        isFormatting = false
+                    }
+                }
+            }
+        })
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        // Add the MenuProvider
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
@@ -86,7 +136,7 @@ class NoteEditorFragment : Fragment(), MenuProvider {
             title = title,
             content = content
         )
-        
+
         if (currentNote == null) {
             noteViewModel.insert(updatedNote)
             Toast.makeText(context, "Note saved", Toast.LENGTH_SHORT).show()
@@ -94,8 +144,8 @@ class NoteEditorFragment : Fragment(), MenuProvider {
             noteViewModel.update(updatedNote)
             Toast.makeText(context, "Note updated", Toast.LENGTH_SHORT).show()
         }
-        
-        findNavController().navigateUp() // Go back to list
+
+        findNavController().navigateUp()
     }
 
     private fun deleteNote() {
@@ -113,14 +163,12 @@ class NoteEditorFragment : Fragment(), MenuProvider {
         }
     }
 
-    // This is the new, required method from MenuProvider
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
         if (currentNote != null) {
             menuInflater.inflate(R.menu.editor_menu, menu)
         }
     }
 
-    // This is the new, required method from MenuProvider
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         return when (menuItem.itemId) {
             R.id.action_delete -> {

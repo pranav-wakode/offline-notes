@@ -1,3 +1,0 @@
-com.example.offlinenotes.test
-style WhiteBackgroundDialogTheme
-style WhiteBackgroundTheme

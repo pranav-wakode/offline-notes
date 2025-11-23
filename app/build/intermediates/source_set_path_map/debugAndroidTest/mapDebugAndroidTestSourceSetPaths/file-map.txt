@@ -1,6 +1,0 @@
-com.example.offlinenotes.test.app-jetified-core-1.5.0-0 /home/pranav/.gradle/caches/9.0-milestone-1/transforms/053e37cb728bd58e1d043ee36404e19c/transformed/jetified-core-1.5.0/res
-com.example.offlinenotes.test.app-jetified-annotation-experimental-1.3.0-1 /home/pranav/.gradle/caches/9.0-milestone-1/transforms/535b780df1199c20877bf3ae644b13da/transformed/jetified-annotation-experimental-1.3.0/res
-com.example.offlinenotes.test.app-androidTest-2 /mnt/extra/Project/OfflineNotesApp/app/build/generated/res/resValues/androidTest/debug
-com.example.offlinenotes.test.app-mergeDebugAndroidTestResources-3 /mnt/extra/Project/OfflineNotesApp/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/merged.dir
-com.example.offlinenotes.test.app-mergeDebugAndroidTestResources-4 /mnt/extra/Project/OfflineNotesApp/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/stripped.dir
-com.example.offlinenotes.test.app-debugAndroidTest-5 /mnt/extra/Project/OfflineNotesApp/app/build/intermediates/merged_res/debugAndroidTest/mergeDebugAndroidTestResources

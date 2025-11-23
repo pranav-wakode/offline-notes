@@ -4,20 +4,19 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-// Import the switchMap extension function
 import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import com.example.offlinenotes.data.repository.NoteRepository
 import com.example.offlinenotes.model.Note
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class NoteViewModel(application: Application, private val repository: NoteRepository) : AndroidViewModel(application) {
 
     val allNotes: LiveData<List<Note>> = repository.allNotes
     private val searchQuery = MutableLiveData<String>("")
 
-    // Use the modern 'switchMap' extension function directly on 'searchQuery'
     val searchedNotes: LiveData<List<Note>> = searchQuery.switchMap { query ->
         if (query.isNullOrEmpty()) {
             repository.allNotes
@@ -32,6 +31,15 @@ class NoteViewModel(application: Application, private val repository: NoteReposi
 
     fun insert(note: Note) = viewModelScope.launch(Dispatchers.IO) {
         repository.insert(note)
+    }
+
+    fun importNotes(notes: List<Note>) = viewModelScope.launch(Dispatchers.IO) {
+        repository.insertAll(notes)
+    }
+
+    // Returns a list directly for export
+    suspend fun getAllNotesForExport(): List<Note> = withContext(Dispatchers.IO) {
+        repository.getAllNotesSync()
     }
 
     fun update(note: Note) = viewModelScope.launch(Dispatchers.IO) {

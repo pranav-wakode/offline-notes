@@ -12,6 +12,14 @@ class NoteRepository(private val noteDao: NoteDao) {
         noteDao.insertNote(note)
     }
 
+    suspend fun insertAll(notes: List<Note>) {
+        noteDao.insertAll(notes)
+    }
+
+    suspend fun getAllNotesSync(): List<Note> {
+        return noteDao.getAllNotesSync()
+    }
+
     suspend fun update(note: Note) {
         noteDao.updateNote(note)
     }
@@ -23,7 +31,7 @@ class NoteRepository(private val noteDao: NoteDao) {
     fun searchNotes(query: String): LiveData<List<Note>> {
         return noteDao.searchNotes("%$query%")
     }
-    
+
     fun getNoteById(noteId: Int): LiveData<Note> {
         return noteDao.getNoteById(noteId)
     }
