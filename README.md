@@ -21,14 +21,14 @@ A simple, private, offline-first notes application for Android, built as a light
 
 ### 🔍 Search & Management
 * **Instant Search:** Quickly filter notes by title or content.
-    <br><img src="screenshots/search.jpg" width="300" alt="Search">
+    <br><img src="screenshots/search.jpg" width="30%" alt="Search">
 * **Delete Protection:** Confirmation dialogs to prevent accidental deletion.
-    <br><img src="screenshots/delete_note.jpg" width="300" alt="Delete">
+    <br><img src="screenshots/delete_note.jpg" width="30%" alt="Delete">
 
 ### 💾 Data & Privacy
 * **100% Offline:** Uses Room Database for secure, fast, and reliable local storage.
 * **Import/Export:** Portable data! Backup your notes to a JSON file and restore them on any device.
-    <br><img src="screenshots/import_export.jpg" width="300" alt="Import Export">
+    <br><img src="screenshots/import_export.jpg" width="30%" alt="Import Export">
 * **Persistent:** Data is saved instantly and survives app closures and device restarts.
 
 ---
