@@ -4,16 +4,32 @@ A simple, private, offline-first notes application for Android, built as a light
 
 > **Core Philosophy:** Your notes are yours. This app is 100% offline. It has **no internet permission**, no cloud syncing, and no servers. All your data lives and dies on your device.
 
+<p align="center">
+  <img src="screenshots/notes.jpg" width="30%" alt="All Notes"/>
+  <img src="screenshots/new_note.jpg" width="30%" alt="New Note"/>
+  <img src="screenshots/edit_note.jpg" width="30%" alt="Edit Note"/>
+</p>
+
 ---
 
 ## ✨ Features
 
-* **Create, Read, Update, Delete (CRUD):** A full-featured notes editor to create new notes, read existing ones, update them, or delete them.
-* **100% Offline Storage:** All notes are saved locally using a robust Room database.
-* **Persistent Data:** Your notes are saved instantly and persist even after you close the app or restart your device.
-* **Clean, Responsive UI:** A minimalistic Material Design layout using a staggered grid (like Google Keep) for easy viewing.
-* **Instant Search:** Quickly filter and find your notes by title or content.
-* **Automatic Timestamps:** Each note automatically stores its creation and last-modified times.
+### 📝 Smart Editing & Organization
+* **Rich Editor:** Create and update notes with a clean, distraction-free interface.
+* **Auto-Bullets:** The editor automatically formats new lines with bullet points for structured note-taking.
+* **CRUD Operations:** Seamlessly create, read, update, and delete notes.
+
+### 🔍 Search & Management
+* **Instant Search:** Quickly filter notes by title or content.
+    <br><img src="screenshots/search.jpg" width="300" alt="Search">
+* **Delete Protection:** Confirmation dialogs to prevent accidental deletion.
+    <br><img src="screenshots/delete_note.jpg" width="300" alt="Delete">
+
+### 💾 Data & Privacy
+* **100% Offline:** Uses Room Database for secure, fast, and reliable local storage.
+* **Import/Export:** Portable data! Backup your notes to a JSON file and restore them on any device.
+    <br><img src="screenshots/import_export.jpg" width="300" alt="Import Export">
+* **Persistent:** Data is saved instantly and survives app closures and device restarts.
 
 ---
 
@@ -23,24 +39,20 @@ This project follows modern Android development best practices, emphasizing a cl
 
 * **Language:** **Kotlin**
 * **Architecture:** **MVVM (Model-View-ViewModel)**
-    * **Model:** The `Note` entity and the `NoteRepository` abstracting the data source.
-    * **View:** `MainActivity` hosting `NoteListFragment` and `NoteEditorFragment`.
-    * **ViewModel:** `NoteViewModel` acts as the bridge, holding and processing UI-related data, surviving configuration changes.
-* **Database:** **Room Database** (part of Jetpack) for efficient and reliable local SQLite storage.
-* **Asynchronous:** **Kotlin Coroutines** and **LiveData** for handling background database operations and reactively updating the UI.
-* **Navigation:** **Jetpack Navigation Component** to manage fragment transactions and argument passing.
-* **UI:** **Android XML Layouts** with `RecyclerView` (using `StaggeredGridLayoutManager`) and `MaterialCardView`.
+    * **Model:** `Note` entity & `NoteRepository`.
+    * **View:** `MainActivity`, `NoteListFragment`, `NoteEditorFragment`.
+    * **ViewModel:** `NoteViewModel` for UI state management.
+* **Database:** **Room Database** (SQLite)
+* **Asynchronous:** **Kotlin Coroutines** & **LiveData**
+* **Navigation:** **Jetpack Navigation Component**
+* **Serialization:** **Gson** (for JSON Import/Export)
+* **UI:** **XML Layouts** with `RecyclerView` & `StaggeredGridLayoutManager`
 
 ---
 
 ## 🚀 How to Build
 
-You can build this project using Android Studio:
-
 1.  **Clone** the repository.
-```bash
-git clone https://github.com/wakodepranav2005-git/offline_notes.git
-```
-2.  **Open** the `offline_notes` directory in Android Studio.
+2.  **Open** the `OfflineNotesApp` directory in Android Studio.
 3.  Let Gradle sync all the dependencies.
 4.  **Run** the app on an emulator or a physical Android device (Android 8.0+).
