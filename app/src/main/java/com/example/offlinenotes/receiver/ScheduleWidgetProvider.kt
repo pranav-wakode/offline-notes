@@ -34,13 +34,18 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
 
         // Launch app on title click
         val intent = Intent(context, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
         views.setOnClickPendingIntent(R.id.widget_title, pendingIntent)
 
         // Fetch data asynchronously
         CoroutineScope(Dispatchers.IO).launch {
             val database = NoteDatabase.getDatabase(context)
-            val schedules = database.getScheduleDao().getAllSchedulesSync() // Requires DAO sync method we created in Part 3
+            val schedules = database.getScheduleDao().getAllSchedulesSync()
 
             withContext(Dispatchers.Main) {
                 if (schedules.isNotEmpty()) {
@@ -66,24 +71,24 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
         try {
             val data = Gson().fromJson(gridDataString, ScheduleData::class.java)
 
-            // Header Row
-            val headerRow = RemoteViews(context.packageName, android.R.layout.widget_layout_horizontal) // Using native horizontal layout
-            headerRow.addView(android.R.id.content, createCellRemoteView(context, "", true))
+            // Header Row - using our new custom layout
+            val headerRow = RemoteViews(context.packageName, R.layout.widget_row)
+            headerRow.addView(R.id.widget_row_container, createCellRemoteView(context, "", true))
 
             data.columns.forEach { colName ->
-                headerRow.addView(android.R.id.content, createCellRemoteView(context, colName, true))
+                headerRow.addView(R.id.widget_row_container, createCellRemoteView(context, colName, true))
             }
             views.addView(R.id.widget_grid_container, headerRow)
 
             // Data Rows
             data.rows.forEachIndexed { rowIndex, rowName ->
-                val dataRow = RemoteViews(context.packageName, android.R.layout.widget_layout_horizontal)
-                dataRow.addView(android.R.id.content, createCellRemoteView(context, rowName, true))
+                val dataRow = RemoteViews(context.packageName, R.layout.widget_row)
+                dataRow.addView(R.id.widget_row_container, createCellRemoteView(context, rowName, true))
 
                 data.columns.forEachIndexed { colIndex, _ ->
                     val key = "${rowIndex}_${colIndex}"
                     val content = data.cells[key] ?: ""
-                    dataRow.addView(android.R.id.content, createCellRemoteView(context, content, false))
+                    dataRow.addView(R.id.widget_row_container, createCellRemoteView(context, content, false))
                 }
                 views.addView(R.id.widget_grid_container, dataRow)
             }
@@ -94,19 +99,16 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
     }
 
     private fun createCellRemoteView(context: Context, text: String, isHeader: Boolean): RemoteViews {
-        // We inject standard TextViews directly into the remote hierarchy dynamically
-        val cell = RemoteViews(context.packageName, android.R.layout.simple_list_item_1)
-        cell.setTextViewText(android.R.id.text1, text)
-        cell.setTextColor(android.R.id.text1, Color.BLACK)
+        // We inject our custom widget_cell.xml directly into the remote hierarchy dynamically
+        val cell = RemoteViews(context.packageName, R.layout.widget_cell)
+        cell.setTextViewText(R.id.widget_cell_text, text)
 
         if (isHeader) {
-            cell.setInt(android.R.id.text1, "setBackgroundColor", Color.parseColor("#E0E0E0"))
+            cell.setInt(R.id.widget_cell_text, "setBackgroundColor", Color.parseColor("#E0E0E0"))
         } else {
-            cell.setInt(android.R.id.text1, "setBackgroundColor", Color.parseColor("#F5F5F5"))
+            cell.setInt(R.id.widget_cell_text, "setBackgroundColor", Color.parseColor("#F5F5F5"))
         }
 
-        // Add padding via RemoteViews margin trick or standard padding if API allows.
-        // Using simple_list_item_1 provides default sensible paddings.
         return cell
     }
 }
