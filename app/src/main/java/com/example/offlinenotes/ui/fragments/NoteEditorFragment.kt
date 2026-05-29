@@ -71,6 +71,8 @@ class NoteEditorFragment : Fragment(), MenuProvider {
         bulletManager = BulletManager(etContent)
 
         currentNote = args.note
+
+        // If the note has an ID of 0, it means it was passed explicitly as a dummy holder for folderId / isVault state
         currentNote?.let {
             isVaultNote = it.isVault
             etTitle.setText(it.title)
@@ -191,9 +193,9 @@ class NoteEditorFragment : Fragment(), MenuProvider {
 
     private fun updateVaultToggleUI() {
         if (isVaultNote) {
-            btnVaultToggle.setColorFilter(Color.parseColor("#4CAF50")) // Green to indicate secure
+            btnVaultToggle.setColorFilter(Color.parseColor("#4CAF50"))
         } else {
-            btnVaultToggle.setColorFilter(Color.parseColor("#757575")) // Grey off
+            btnVaultToggle.setColorFilter(Color.parseColor("#757575"))
         }
     }
 
@@ -245,6 +247,9 @@ class NoteEditorFragment : Fragment(), MenuProvider {
         val selectedPos = spinnerFolder.selectedItemPosition
         val folderId = if (selectedPos > 0) folderList[selectedPos - 1].id else null
 
+        // If currentNote is null or its ID is 0, it means it's a NEW note.
+        val isNewNote = currentNote == null || currentNote?.id == 0
+
         val updatedNote = currentNote?.copy(
             title = finalTitle,
             content = finalContent,
@@ -260,13 +265,21 @@ class NoteEditorFragment : Fragment(), MenuProvider {
             iv = finalIv
         )
 
-        if (currentNote == null) viewModel.insert(updatedNote) else viewModel.update(updatedNote)
+        if (isNewNote) {
+            viewModel.insert(updatedNote)
+        } else {
+            viewModel.update(updatedNote)
+        }
+
         Toast.makeText(context, "Note Saved", Toast.LENGTH_SHORT).show()
         findNavController().navigateUp()
     }
 
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-        if (currentNote != null) menuInflater.inflate(R.menu.editor_menu, menu)
+        // Only show delete menu if note exists and is not a dummy Note (id != 0)
+        if (currentNote != null && currentNote?.id != 0) {
+            menuInflater.inflate(R.menu.editor_menu, menu)
+        }
     }
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {

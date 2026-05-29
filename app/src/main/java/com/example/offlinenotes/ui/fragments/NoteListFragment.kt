@@ -60,8 +60,12 @@ class NoteListFragment : Fragment(), MenuProvider {
 
         setupRecyclerViews(view)
 
+        // FAB INTERACTION: Pass the current active folder down to the editor via SafeArgs
         view.findViewById<FloatingActionButton>(R.id.fab_add_note).setOnClickListener {
-            findNavController().navigate(R.id.action_noteListFragment_to_noteEditorFragment)
+            val activeFolderId = noteViewModel.getCurrentFolderId()
+            val newNote = Note(id = 0, title = "", content = "", folderId = activeFolderId)
+            val action = NoteListFragmentDirections.actionNoteListFragmentToNoteEditorFragment(newNote)
+            findNavController().navigate(action)
         }
 
         noteViewModel.displayNotes.observe(viewLifecycleOwner) { notes ->
@@ -239,13 +243,11 @@ class NoteListFragment : Fragment(), MenuProvider {
                 val gson = Gson()
 
                 if (jsonString.startsWith("[")) {
-                    // Legacy V1 Backup (List of Notes)
                     val listType = object : TypeToken<List<Note>>() {}.type
                     val notes: List<Note> = gson.fromJson(jsonString, listType)
                     noteViewModel.importNotes(notes)
                     Toast.makeText(context, "Legacy Backup Restored!", Toast.LENGTH_SHORT).show()
                 } else if (jsonString.startsWith("{")) {
-                    // V2, V3, or V4 Backup Wrapper
                     val backupType = object : TypeToken<BackupData>() {}.type
                     val backupData: BackupData = gson.fromJson(jsonString, backupType)
 
@@ -253,7 +255,6 @@ class NoteListFragment : Fragment(), MenuProvider {
                     noteViewModel.importNotes(backupData.notes)
                     noteViewModel.importSchedules(backupData.schedules)
 
-                    // Restore Vault Encryption State if present in V4 backup
                     if (backupData.vaultSalt != null && backupData.vaultVerificationToken != null && backupData.vaultVerificationIv != null) {
                         noteViewModel.vaultManager.restoreVaultAuth(
                             backupData.vaultSalt,

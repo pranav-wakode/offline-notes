@@ -6,32 +6,60 @@
     android:id="@+id/schedule_card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp"
-    app:contentPadding="16dp">
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="?attr/colorOutlineVariant">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tv_schedule_title"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-            android:textStyle="bold"
-            tools:text="Weekly Gym Routine" />
+            android:background="?attr/colorSurfaceVariant"
+            android:padding="16dp"
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tv_schedule_preview"
+            <TextView
+                android:id="@+id/tv_schedule_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textStyle="bold"
+                tools:text="Weekly Gym Routine" />
+
+            <TextView
+                android:id="@+id/tv_schedule_preview_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                tools:text="3 Columns x 5 Rows" />
+        </LinearLayout>
+
+        <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textAppearance="@style/TextAppearance.AppCompat.Small"
-            android:textColor="?android:attr/textColorSecondary"
-            tools:text="Grid: 3 Columns x 5 Rows" />
+            android:fadeScrollbars="false"
+            android:padding="16dp"
+            android:scrollbars="none">
+
+            <TableLayout
+                android:id="@+id/table_preview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:divider="?android:attr/dividerHorizontal"
+                android:showDividers="middle" />
+
+        </HorizontalScrollView>
+
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

@@ -38,8 +38,6 @@ class NoteViewModel(application: Application, private val repository: NoteReposi
         }
     }
 
-    // --- Vault Decryption Stream ---
-    // Safely decrypts notes for display. Uses a single payload to prevent IV reuse.
     val decryptedVaultNotes: LiveData<List<Note>> = repository.vaultNotes.map { encryptedList ->
         if (!vaultManager.isVaultUnlocked) return@map emptyList()
 
@@ -47,15 +45,11 @@ class NoteViewModel(application: Application, private val repository: NoteReposi
             try {
                 if (encryptedNote.iv == null) return@mapNotNull encryptedNote
 
-                // Decrypt the combined payload
                 val decryptedText = vaultManager.decryptNoteData(encryptedNote.content, encryptedNote.iv)
-
-                // Split back into Title and Content
                 val parts = decryptedText.split("|||---|||", limit = 2)
                 val dTitle = parts.getOrNull(0) ?: ""
                 val dContent = parts.getOrNull(1) ?: ""
 
-                // Return mapped Note for the UI
                 encryptedNote.copy(title = dTitle, content = dContent)
             } catch (e: Exception) {
                 encryptedNote.copy(title = "🔒 Decryption Failed", content = "Data may be corrupted or password changed.")
@@ -65,6 +59,9 @@ class NoteViewModel(application: Application, private val repository: NoteReposi
 
     fun setSearchQuery(query: String) { searchQuery.value = query }
     fun setCurrentFolder(folderId: Int?) { currentFolderId.value = folderId }
+
+    // EXPOSE CURRENT FOLDER FOR INHERITANCE
+    fun getCurrentFolderId(): Int? = currentFolderId.value
 
     // --- Notes ---
     fun insert(note: Note) = viewModelScope.launch(Dispatchers.IO) { repository.insert(note) }
