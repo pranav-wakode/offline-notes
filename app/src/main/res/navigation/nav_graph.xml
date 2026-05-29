@@ -10,24 +10,54 @@
         android:name="com.example.offlinenotes.ui.fragments.NoteListFragment"
         android:label="Offline Notes"
         tools:layout="@layout/fragment_note_list">
-        <action
-            android:id="@+id/action_noteListFragment_to_noteEditorFragment"
-            app:destination="@id/noteEditorFragment"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left"
-            app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+        <action android:id="@+id/action_noteListFragment_to_noteEditorFragment" app:destination="@id/noteEditorFragment" />
+        <action android:id="@+id/action_noteListFragment_to_vaultSetupFragment" app:destination="@id/vaultSetupFragment" />
+        <action android:id="@+id/action_noteListFragment_to_vaultUnlockFragment" app:destination="@id/vaultUnlockFragment" />
+        <action android:id="@+id/action_noteListFragment_to_vaultListFragment" app:destination="@id/vaultListFragment" />
     </fragment>
-    
+
     <fragment
         android:id="@+id/noteEditorFragment"
         android:name="com.example.offlinenotes.ui.fragments.NoteEditorFragment"
-        android:label="Edit Note"
+        android:label="Editor"
         tools:layout="@layout/fragment_note_editor">
-        <argument
-            android:name="note"
-            app:argType="com.example.offlinenotes.model.Note"
-            app:nullable="true"
-            android:defaultValue="@null" />
+        <argument android:name="note" app:argType="com.example.offlinenotes.model.Note" app:nullable="true" android:defaultValue="@null" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/scheduleListFragment"
+        android:name="com.example.offlinenotes.ui.fragments.ScheduleListFragment"
+        android:label="Schedules"
+        tools:layout="@layout/fragment_schedule_list">
+        <action android:id="@+id/action_scheduleListFragment_to_scheduleEditorFragment" app:destination="@id/scheduleEditorFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/scheduleEditorFragment"
+        android:name="com.example.offlinenotes.ui.fragments.ScheduleEditorFragment"
+        android:label="Edit Schedule"
+        tools:layout="@layout/fragment_schedule_editor">
+        <argument android:name="schedule" app:argType="com.example.offlinenotes.model.Schedule" app:nullable="true" android:defaultValue="@null" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/vaultSetupFragment"
+        android:name="com.example.offlinenotes.ui.fragments.VaultSetupFragment"
+        android:label="Setup Vault"
+        tools:layout="@layout/fragment_vault_setup">
+        <action android:id="@+id/action_vaultSetupFragment_to_vaultListFragment" app:destination="@id/vaultListFragment" app:popUpTo="@id/noteListFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/vaultUnlockFragment"
+        android:name="com.example.offlinenotes.ui.fragments.VaultUnlockFragment"
+        android:label="Unlock Vault"
+        tools:layout="@layout/fragment_vault_unlock">
+        <action android:id="@+id/action_vaultUnlockFragment_to_vaultListFragment" app:destination="@id/vaultListFragment" app:popUpTo="@id/noteListFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/vaultListFragment"
+        android:name="com.example.offlinenotes.ui.fragments.VaultListFragment"
+        android:label="Secure Vault"
+        tools:layout="@layout/fragment_vault_list">
+        <action android:id="@+id/action_vaultListFragment_to_noteEditorFragment" app:destination="@id/noteEditorFragment" />
     </fragment>
 </navigation>

@@ -1,10 +1,20 @@
 package com.example.offlinenotes.ui.fragments
 
+import android.app.AlarmManager
+import android.app.DatePickerDialog
+import android.app.PendingIntent
+import android.app.TimePickerDialog
+import android.content.Context
+import android.content.Intent
+import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
+import android.provider.Settings
 import android.view.*
+import android.widget.ArrayAdapter
 import android.widget.EditText
+import android.widget.ImageButton
+import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.MenuHost
@@ -16,101 +26,187 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.offlinenotes.R
 import com.example.offlinenotes.data.database.NoteDatabase
-import com.example.offlinenotes.data.repository.NoteRepository
+import com.example.offlinenotes.model.Folder
 import com.example.offlinenotes.model.Note
+import com.example.offlinenotes.receiver.ReminderReceiver
 import com.example.offlinenotes.ui.viewmodel.NoteViewModel
 import com.example.offlinenotes.ui.viewmodel.NoteViewModelFactory
+import com.example.offlinenotes.utils.BulletManager
+import com.example.offlinenotes.utils.BulletType
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+import kotlin.random.Random
 
 class NoteEditorFragment : Fragment(), MenuProvider {
 
-    private lateinit var noteViewModel: NoteViewModel
+    private lateinit var viewModel: NoteViewModel
     private val args: NoteEditorFragmentArgs by navArgs()
-
     private var currentNote: Note? = null
+
     private lateinit var etTitle: EditText
     private lateinit var etContent: EditText
-    private lateinit var fabSave: FloatingActionButton
+    private lateinit var spinnerFolder: Spinner
+    private lateinit var btnVaultToggle: ImageButton
+
+    private var folderList: List<Folder> = emptyList()
+    private lateinit var bulletManager: BulletManager
+    private var isVaultNote = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_note_editor, container, false)
-
         val database = NoteDatabase.getDatabase(requireContext())
-        val repository = NoteRepository(database.getNoteDao())
-        val factory = NoteViewModelFactory(requireActivity().application, repository)
-        noteViewModel = ViewModelProvider(this, factory)[NoteViewModel::class.java]
+        val factory = NoteViewModelFactory(requireActivity().application, database)
+        viewModel = ViewModelProvider(this, factory)[NoteViewModel::class.java]
 
         etTitle = view.findViewById(R.id.et_note_title)
         etContent = view.findViewById(R.id.et_note_content)
-        fabSave = view.findViewById(R.id.fab_save)
+        spinnerFolder = view.findViewById(R.id.spinner_folder)
+        btnVaultToggle = view.findViewById(R.id.btn_vault_toggle)
+
+        bulletManager = BulletManager(etContent)
 
         currentNote = args.note
-
         currentNote?.let {
+            isVaultNote = it.isVault
             etTitle.setText(it.title)
             etContent.setText(it.content)
         }
 
-        fabSave.setOnClickListener {
-            saveNote()
+        updateVaultToggleUI()
+        setupToolbar(view)
+
+        btnVaultToggle.setOnClickListener {
+            if (!isVaultNote && !viewModel.vaultManager.isVaultUnlocked) {
+                Toast.makeText(context, "Unlock vault first to secure notes.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            isVaultNote = !isVaultNote
+            updateVaultToggleUI()
         }
 
-        setupAutoBullets()
+        viewModel.allFolders.observe(viewLifecycleOwner) { folders ->
+            folderList = folders
+            setupFolderSpinner()
+        }
+
+        view.findViewById<FloatingActionButton>(R.id.fab_save).setOnClickListener { saveNote() }
 
         return view
     }
 
-    private fun setupAutoBullets() {
-        etContent.addTextChangedListener(object : TextWatcher {
-            private var previousText = ""
-            private var isFormatting = false
+    private fun setupToolbar(view: View) {
+        val btnStandard = view.findViewById<ImageButton>(R.id.btn_bullet_standard)
+        val btnCheckbox = view.findViewById<ImageButton>(R.id.btn_bullet_checkbox)
+        val btnDate = view.findViewById<ImageButton>(R.id.btn_bullet_date)
+        val btnReminder = view.findViewById<ImageButton>(R.id.btn_bullet_reminder)
 
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-                previousText = s.toString()
+        btnStandard.setOnClickListener {
+            val newType = if (bulletManager.currentBulletType == BulletType.STANDARD) BulletType.NONE else BulletType.STANDARD
+            bulletManager.insertBulletAtCursor(newType)
+        }
+
+        btnCheckbox.setOnClickListener {
+            val newType = if (bulletManager.currentBulletType == BulletType.CHECKBOX) BulletType.NONE else BulletType.CHECKBOX
+            bulletManager.insertBulletAtCursor(newType)
+        }
+
+        btnDate.setOnClickListener {
+            val calendar = Calendar.getInstance()
+            DatePickerDialog(requireContext(), { _, year, month, dayOfMonth ->
+                val formatted = String.format(Locale.getDefault(), "📅 [%04d-%02d-%02d]", year, month + 1, dayOfMonth)
+                bulletManager.insertDateOrReminder(formatted)
+            }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()
+        }
+
+        btnReminder.setOnClickListener {
+            checkExactAlarmPermission()
+        }
+    }
+
+    private fun checkExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = requireContext().getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            if (!alarmManager.canScheduleExactAlarms()) {
+                val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                startActivity(intent)
+                Toast.makeText(requireContext(), "Please grant permission to schedule reminders", Toast.LENGTH_LONG).show()
+                return
             }
+        }
+        showReminderPicker()
+    }
 
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                // No operation
-            }
-
-            override fun afterTextChanged(s: Editable?) {
-                if (isFormatting || s == null) return
-
-                val text = s.toString()
-                // Detect if a newline was just added
-                if (text.length > previousText.length && text.endsWith("\n") && !previousText.endsWith("\n")) {
-                    isFormatting = true
-
-                    try {
-                        // Find the start and end of the line *before* the newline
-                        // The cursor is currently at the end (after \n)
-                        val cursorPosition = etContent.selectionStart
-                        val textBeforeCursor = text.substring(0, cursorPosition - 1) // Exclude the new \n
-                        val lastLineIndex = textBeforeCursor.lastIndexOf('\n') + 1
-
-                        // Get the content of the line just finished
-                        val lastLine = textBeforeCursor.substring(lastLineIndex)
-
-                        // If the line is not empty and doesn't already have a bullet
-                        if (lastLine.isNotBlank() && !lastLine.trimStart().startsWith("•")) {
-                            // Insert bullet at the start of that line
-                            s.insert(lastLineIndex, "• ")
-                        }
-
-                        // Optional: If you also want the NEW line to auto-start with a bullet
-                        // s.append("• ")
-
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    } finally {
-                        isFormatting = false
-                    }
+    private fun showReminderPicker() {
+        val calendar = Calendar.getInstance()
+        DatePickerDialog(requireContext(), { _, year, month, dayOfMonth ->
+            TimePickerDialog(requireContext(), { _, hourOfDay, minute ->
+                val scheduledTime = Calendar.getInstance().apply {
+                    set(year, month, dayOfMonth, hourOfDay, minute, 0)
                 }
-            }
-        })
+
+                if (scheduledTime.timeInMillis <= System.currentTimeMillis()) {
+                    Toast.makeText(context, "Cannot schedule in the past", Toast.LENGTH_SHORT).show()
+                    return@TimePickerDialog
+                }
+
+                val reminderId = Random.nextInt(10000, 99999)
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+                val formatted = "⏰ [${dateFormat.format(scheduledTime.time)}|ID:$reminderId]"
+
+                bulletManager.insertDateOrReminder(formatted)
+                scheduleOfflineAlarm(scheduledTime.timeInMillis, reminderId)
+
+            }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), false).show()
+        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()
+    }
+
+    private fun scheduleOfflineAlarm(timeInMillis: Long, reminderId: Int) {
+        val titleText = etTitle.text.toString().takeIf { it.isNotBlank() } ?: "Scheduled Note"
+
+        val alarmManager = requireContext().getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(requireContext(), ReminderReceiver::class.java).apply {
+            putExtra("title", titleText)
+            putExtra("noteId", reminderId)
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            requireContext(),
+            reminderId,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        try {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent)
+            Toast.makeText(context, "Reminder set!", Toast.LENGTH_SHORT).show()
+        } catch (e: SecurityException) {
+            Toast.makeText(context, "Failed to schedule alarm: Permission denied", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun updateVaultToggleUI() {
+        if (isVaultNote) {
+            btnVaultToggle.setColorFilter(Color.parseColor("#4CAF50")) // Green to indicate secure
+        } else {
+            btnVaultToggle.setColorFilter(Color.parseColor("#757575")) // Grey off
+        }
+    }
+
+    private fun setupFolderSpinner() {
+        val folderNames = mutableListOf("No Folder")
+        folderNames.addAll(folderList.map { it.name })
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, folderNames)
+        spinnerFolder.adapter = adapter
+
+        if (currentNote?.folderId != null) {
+            val idx = folderList.indexOfFirst { it.id == currentNote!!.folderId }
+            if (idx != -1) spinnerFolder.setSelection(idx + 1)
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -120,62 +216,67 @@ class NoteEditorFragment : Fragment(), MenuProvider {
     }
 
     private fun saveNote() {
-        val title = etTitle.text.toString().trim()
-        val content = etContent.text.toString().trim()
+        val rawTitle = etTitle.text.toString().trim()
+        val rawContent = etContent.text.toString().trim()
 
-        if (title.isEmpty() && content.isEmpty()) {
-            Toast.makeText(context, "Cannot save an empty note", Toast.LENGTH_SHORT).show()
+        if (rawTitle.isEmpty() && rawContent.isEmpty()) {
+            Toast.makeText(context, "Cannot save empty note", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val updatedNote = currentNote?.copy(
-            title = title,
-            content = content,
-            modifiedAt = System.currentTimeMillis()
-        ) ?: Note(
-            title = title,
-            content = content
-        )
+        var finalTitle = rawTitle
+        var finalContent = rawContent
+        var finalIv: String? = currentNote?.iv
 
-        if (currentNote == null) {
-            noteViewModel.insert(updatedNote)
-            Toast.makeText(context, "Note saved", Toast.LENGTH_SHORT).show()
-        } else {
-            noteViewModel.update(updatedNote)
-            Toast.makeText(context, "Note updated", Toast.LENGTH_SHORT).show()
+        // Security Protocol: Encrypt on the fly
+        if (isVaultNote) {
+            if (!viewModel.vaultManager.isVaultUnlocked) {
+                Toast.makeText(context, "Cannot save secure note while vault is locked.", Toast.LENGTH_LONG).show()
+                return
+            }
+            val payload = "$rawTitle|||---|||$rawContent"
+            val (ciphertext, iv) = viewModel.vaultManager.encryptNoteData(payload)
+
+            finalTitle = "🔒 Encrypted Note"
+            finalContent = ciphertext
+            finalIv = iv
         }
 
+        val selectedPos = spinnerFolder.selectedItemPosition
+        val folderId = if (selectedPos > 0) folderList[selectedPos - 1].id else null
+
+        val updatedNote = currentNote?.copy(
+            title = finalTitle,
+            content = finalContent,
+            modifiedAt = System.currentTimeMillis(),
+            folderId = folderId,
+            isVault = isVaultNote,
+            iv = finalIv
+        ) ?: Note(
+            title = finalTitle,
+            content = finalContent,
+            folderId = folderId,
+            isVault = isVaultNote,
+            iv = finalIv
+        )
+
+        if (currentNote == null) viewModel.insert(updatedNote) else viewModel.update(updatedNote)
+        Toast.makeText(context, "Note Saved", Toast.LENGTH_SHORT).show()
         findNavController().navigateUp()
     }
 
-    private fun deleteNote() {
-        currentNote?.let {
-            AlertDialog.Builder(requireContext())
-                .setTitle("Delete Note")
-                .setMessage("Are you sure you want to delete this note?")
-                .setPositiveButton("Delete") { _, _ ->
-                    noteViewModel.delete(it)
-                    Toast.makeText(context, "Note deleted", Toast.LENGTH_SHORT).show()
-                    findNavController().navigateUp()
-                }
-                .setNegativeButton("Cancel", null)
-                .show()
-        }
-    }
-
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-        if (currentNote != null) {
-            menuInflater.inflate(R.menu.editor_menu, menu)
-        }
+        if (currentNote != null) menuInflater.inflate(R.menu.editor_menu, menu)
     }
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-        return when (menuItem.itemId) {
-            R.id.action_delete -> {
-                deleteNote()
-                true
+        if (menuItem.itemId == R.id.action_delete) {
+            currentNote?.let {
+                viewModel.delete(it)
+                findNavController().navigateUp()
             }
-            else -> false
+            return true
         }
+        return false
     }
 }

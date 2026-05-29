@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_vault"
+        android:icon="@drawable/ic_lock"
+        android:title="Secure Vault"
+        app:showAsAction="always" />
+
     <item
         android:id="@+id/action_search"
         android:icon="@drawable/ic_search"
@@ -9,12 +16,17 @@
         app:showAsAction="ifRoom|collapseActionView" />
 
     <item
+        android:id="@+id/action_add_folder"
+        android:title="Add Folder"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_export"
-        android:title="Export Notes"
+        android:title="Export Backup"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_import"
-        android:title="Import Notes"
+        android:title="Import Backup"
         app:showAsAction="never" />
 </menu>

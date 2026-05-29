@@ -3,7 +3,6 @@ package com.example.offlinenotes.model
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.io.Serializable
-import java.util.Date
 
 @Entity(tableName = "notes_table")
 data class Note(
@@ -13,6 +12,9 @@ data class Note(
     val content: String,
     val createdAt: Long = System.currentTimeMillis(),
     val modifiedAt: Long = System.currentTimeMillis(),
-    val color: Int = -1, // Optional: For color-coding
-    val isPinned: Boolean = false // Optional: For pinning
-) : Serializable // Serializable to pass between fragments
+    val color: Int = -1,
+    val isPinned: Boolean = false,
+    val folderId: Int? = null,
+    val isVault: Boolean = false, // V4 Security: True if note is encrypted
+    val iv: String? = null        // V4 Security: Base64 AES-GCM Initialization Vector
+) : Serializable

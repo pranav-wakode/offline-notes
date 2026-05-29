@@ -1,10 +1,9 @@
 package com.example.offlinenotes.ui.fragments
 
-import android.app.Activity
-import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.*
+import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SearchView
@@ -15,15 +14,19 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.offlinenotes.R
 import com.example.offlinenotes.data.database.NoteDatabase
-import com.example.offlinenotes.data.repository.NoteRepository
+import com.example.offlinenotes.model.BackupData
+import com.example.offlinenotes.model.Folder
 import com.example.offlinenotes.model.Note
+import com.example.offlinenotes.ui.adapter.FolderAdapter
 import com.example.offlinenotes.ui.adapter.NoteAdapter
 import com.example.offlinenotes.ui.viewmodel.NoteViewModel
 import com.example.offlinenotes.ui.viewmodel.NoteViewModelFactory
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -36,15 +39,12 @@ class NoteListFragment : Fragment(), MenuProvider {
 
     private lateinit var noteViewModel: NoteViewModel
     private lateinit var noteAdapter: NoteAdapter
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var fab: FloatingActionButton
+    private lateinit var folderAdapter: FolderAdapter
 
-    // ActivityResultLauncher for Exporting (creating a file)
     private val exportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         uri?.let { exportData(it) }
     }
 
-    // ActivityResultLauncher for Importing (opening a file)
     private val importLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { importData(it) }
     }
@@ -54,22 +54,21 @@ class NoteListFragment : Fragment(), MenuProvider {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_note_list, container, false)
-
         val database = NoteDatabase.getDatabase(requireContext())
-        val repository = NoteRepository(database.getNoteDao())
-        val factory = NoteViewModelFactory(requireActivity().application, repository)
+        val factory = NoteViewModelFactory(requireActivity().application, database)
         noteViewModel = ViewModelProvider(this, factory)[NoteViewModel::class.java]
 
-        recyclerView = view.findViewById(R.id.recycler_view)
-        setupRecyclerView()
+        setupRecyclerViews(view)
 
-        fab = view.findViewById(R.id.fab_add_note)
-        fab.setOnClickListener {
+        view.findViewById<FloatingActionButton>(R.id.fab_add_note).setOnClickListener {
             findNavController().navigate(R.id.action_noteListFragment_to_noteEditorFragment)
         }
 
-        noteViewModel.searchedNotes.observe(viewLifecycleOwner) { notes ->
+        noteViewModel.displayNotes.observe(viewLifecycleOwner) { notes ->
             notes?.let { noteAdapter.submitList(it) }
+        }
+        noteViewModel.allFolders.observe(viewLifecycleOwner) { folders ->
+            folders?.let { folderAdapter.submitList(it) }
         }
 
         return view
@@ -81,15 +80,61 @@ class NoteListFragment : Fragment(), MenuProvider {
         menuHost.addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 
-    private fun setupRecyclerView() {
+    private fun setupRecyclerViews(view: View) {
+        val rvNotes = view.findViewById<RecyclerView>(R.id.recycler_view)
         noteAdapter = NoteAdapter { note ->
             val action = NoteListFragmentDirections.actionNoteListFragmentToNoteEditorFragment(note)
             findNavController().navigate(action)
         }
-        recyclerView.apply {
+        rvNotes.apply {
             layoutManager = StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
             adapter = noteAdapter
         }
+
+        val rvFolders = view.findViewById<RecyclerView>(R.id.rv_folders)
+        folderAdapter = FolderAdapter(
+            onFolderClick = { folder ->
+                noteViewModel.setCurrentFolder(folder?.id)
+                folderAdapter.setSelectedFolder(folder?.id)
+            },
+            onFolderLongClick = { folder ->
+                showDeleteFolderDialog(folder)
+            }
+        )
+        rvFolders.apply {
+            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+            adapter = folderAdapter
+        }
+    }
+
+    private fun showAddFolderDialog() {
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_folder, null)
+        val etFolderName = dialogView.findViewById<EditText>(R.id.et_folder_name)
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setView(dialogView)
+            .setPositiveButton("Create") { _, _ ->
+                val name = etFolderName.text.toString().trim()
+                if (name.isNotEmpty()) {
+                    noteViewModel.insertFolder(Folder(name = name))
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showDeleteFolderDialog(folder: Folder) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Delete Folder")
+            .setMessage("Are you sure you want to delete '${folder.name}'? Notes inside will be safely moved to 'All Notes'.")
+            .setPositiveButton("Delete") { _, _ ->
+                noteViewModel.deleteFolder(folder)
+                noteViewModel.setCurrentFolder(null)
+                folderAdapter.setSelectedFolder(null)
+                Toast.makeText(context, "Folder deleted", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
@@ -118,6 +163,20 @@ class NoteListFragment : Fragment(), MenuProvider {
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         return when (menuItem.itemId) {
+            R.id.action_vault -> {
+                if (noteViewModel.vaultManager.isVaultUnlocked) {
+                    findNavController().navigate(R.id.action_noteListFragment_to_vaultListFragment)
+                } else if (noteViewModel.vaultManager.isVaultSetup) {
+                    findNavController().navigate(R.id.action_noteListFragment_to_vaultUnlockFragment)
+                } else {
+                    findNavController().navigate(R.id.action_noteListFragment_to_vaultSetupFragment)
+                }
+                true
+            }
+            R.id.action_add_folder -> {
+                showAddFolderDialog()
+                true
+            }
             R.id.action_export -> {
                 val fileName = "notes_backup_${Date().time}.json"
                 exportLauncher.launch(fileName)
@@ -131,18 +190,29 @@ class NoteListFragment : Fragment(), MenuProvider {
         }
     }
 
-    // --- Logic for Exporting ---
     private fun exportData(uri: Uri) {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val notes = noteViewModel.getAllNotesForExport()
-                val gson = Gson()
-                val jsonString = gson.toJson(notes)
+                val notes = noteViewModel.getAllNotesForExport() + noteViewModel.getVaultNotesForExport()
+                val folders = noteViewModel.getAllFoldersForExport()
+                val schedules = noteViewModel.getAllSchedulesForExport()
+
+                val backupData = BackupData(
+                    version = 4,
+                    folders = folders,
+                    notes = notes,
+                    schedules = schedules,
+                    vaultSalt = noteViewModel.vaultManager.getVaultSalt(),
+                    vaultVerificationToken = noteViewModel.vaultManager.getVaultVerificationToken(),
+                    vaultVerificationIv = noteViewModel.vaultManager.getVaultVerificationIv()
+                )
+
+                val jsonString = Gson().toJson(backupData)
 
                 requireContext().contentResolver.openOutputStream(uri)?.use { outputStream ->
                     outputStream.write(jsonString.toByteArray())
                 }
-                Toast.makeText(context, "Notes exported successfully!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Encrypted Backup Exported Successfully!", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 Toast.makeText(context, "Export failed: ${e.message}", Toast.LENGTH_LONG).show()
                 e.printStackTrace()
@@ -150,7 +220,6 @@ class NoteListFragment : Fragment(), MenuProvider {
         }
     }
 
-    // --- Logic for Importing ---
     private fun importData(uri: Uri) {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
@@ -166,18 +235,39 @@ class NoteListFragment : Fragment(), MenuProvider {
                     }
                 }
 
-                val jsonString = stringBuilder.toString()
+                val jsonString = stringBuilder.toString().trim()
                 val gson = Gson()
-                val listType = object : TypeToken<List<Note>>() {}.type
-                val notes: List<Note> = gson.fromJson(jsonString, listType)
 
-                // Reset IDs to 0 so Room treats them as new entries (avoiding ID conflicts)
-                // Or keep them to overwrite. Here we treat them as new imports/overwrites based on logic.
-                // Since we used OnConflictStrategy.REPLACE, existing IDs will be updated.
-                // If you want to duplicate, set id = 0. Let's respect the backup (REPLACE).
+                if (jsonString.startsWith("[")) {
+                    // Legacy V1 Backup (List of Notes)
+                    val listType = object : TypeToken<List<Note>>() {}.type
+                    val notes: List<Note> = gson.fromJson(jsonString, listType)
+                    noteViewModel.importNotes(notes)
+                    Toast.makeText(context, "Legacy Backup Restored!", Toast.LENGTH_SHORT).show()
+                } else if (jsonString.startsWith("{")) {
+                    // V2, V3, or V4 Backup Wrapper
+                    val backupType = object : TypeToken<BackupData>() {}.type
+                    val backupData: BackupData = gson.fromJson(jsonString, backupType)
 
-                noteViewModel.importNotes(notes)
-                Toast.makeText(context, "${notes.size} notes imported!", Toast.LENGTH_SHORT).show()
+                    noteViewModel.importFolders(backupData.folders)
+                    noteViewModel.importNotes(backupData.notes)
+                    noteViewModel.importSchedules(backupData.schedules)
+
+                    // Restore Vault Encryption State if present in V4 backup
+                    if (backupData.vaultSalt != null && backupData.vaultVerificationToken != null && backupData.vaultVerificationIv != null) {
+                        noteViewModel.vaultManager.restoreVaultAuth(
+                            backupData.vaultSalt,
+                            backupData.vaultVerificationToken,
+                            backupData.vaultVerificationIv
+                        )
+                        Toast.makeText(context, "Vault State Restored. Vault is now locked.", Toast.LENGTH_LONG).show()
+                    }
+
+                    Toast.makeText(context, "Full Backup Restored Successfully!", Toast.LENGTH_SHORT).show()
+                } else {
+                    throw Exception("Unrecognized backup format.")
+                }
+
             } catch (e: Exception) {
                 Toast.makeText(context, "Import failed. Invalid JSON?", Toast.LENGTH_LONG).show()
                 e.printStackTrace()
