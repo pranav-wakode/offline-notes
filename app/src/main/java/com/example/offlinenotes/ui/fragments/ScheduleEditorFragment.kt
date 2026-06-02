@@ -54,6 +54,9 @@ class ScheduleEditorFragment : Fragment(), MenuProvider {
         etTitle = view.findViewById(R.id.et_schedule_title)
         tableLayout = view.findViewById(R.id.table_layout_grid)
 
+        // Force the TableLayout to stretch columns to fit evenly
+        tableLayout.isStretchAllColumns = true
+
         currentSchedule = args.schedule
         currentSchedule?.let {
             etTitle.setText(it.name)
@@ -85,7 +88,6 @@ class ScheduleEditorFragment : Fragment(), MenuProvider {
     private fun renderGrid() {
         tableLayout.removeAllViews()
 
-        // 1. Header Row (Top Left corner is empty label, then dynamic Columns)
         val headerRow = TableRow(requireContext())
         headerRow.addView(createLabelCell("Time \\ Day", true))
 
@@ -96,16 +98,13 @@ class ScheduleEditorFragment : Fragment(), MenuProvider {
         }
         tableLayout.addView(headerRow)
 
-        // 2. Data Rows
         scheduleData.rows.forEachIndexed { rowIndex, rowName ->
             val tableRow = TableRow(requireContext())
 
-            // First cell in a row is the Row Label (e.g., Time Slot)
             tableRow.addView(createEditableCell(rowName, true) { newName ->
                 scheduleData.rows[rowIndex] = newName
             })
 
-            // Data Cells
             scheduleData.columns.forEachIndexed { colIndex, _ ->
                 val key = "${rowIndex}_${colIndex}"
                 val content = scheduleData.cells[key] ?: ""
@@ -121,9 +120,15 @@ class ScheduleEditorFragment : Fragment(), MenuProvider {
     private fun createLabelCell(text: String, isHeader: Boolean): TextView {
         val tv = TextView(requireContext())
         tv.text = text
-        tv.setPadding(16, 16, 16, 16)
+        tv.setPadding(24, 24, 24, 24)
+
+        // FIXED: Using layout_weight=1f ensures balanced cells
+        val params = TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f)
+        params.setMargins(4, 4, 4, 4)
+        tv.layoutParams = params
+
         if (isHeader) {
-            tv.setBackgroundColor(Color.parseColor("#E0E0E0")) // Light grey for header distinction
+            tv.setBackgroundColor(Color.parseColor("#E0E0E0"))
             tv.setTextColor(Color.BLACK)
         }
         return tv
@@ -133,11 +138,15 @@ class ScheduleEditorFragment : Fragment(), MenuProvider {
         val et = EditText(requireContext())
         et.setText(initialText)
         et.setPadding(24, 24, 24, 24)
-        et.minWidth = 250
-        et.minLines = 2
         et.gravity = Gravity.TOP or Gravity.START
         et.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
         et.setBackgroundResource(android.R.drawable.edit_text)
+        et.minLines = 2
+
+        // FIXED: Using layout_weight=1f ensures balanced cells
+        val params = TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f)
+        params.setMargins(4, 4, 4, 4)
+        et.layoutParams = params
 
         if (isHeader) {
             et.setBackgroundColor(Color.parseColor("#F5F5F5"))
@@ -167,8 +176,6 @@ class ScheduleEditorFragment : Fragment(), MenuProvider {
             return
         }
 
-        // The TextWatchers update scheduleData dynamically. 
-        // We just serialize it.
         val jsonGrid = gson.toJson(scheduleData)
 
         val updatedSchedule = currentSchedule?.copy(
@@ -207,16 +214,16 @@ class ScheduleEditorFragment : Fragment(), MenuProvider {
     }
 
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-        if (currentSchedule != null) menuInflater.inflate(R.menu.editor_menu, menu)
+        if (currentSchedule != null) {
+            menuInflater.inflate(R.menu.editor_menu, menu)
+        }
     }
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-        return when (menuItem.itemId) {
-            R.id.action_delete -> {
-                deleteSchedule()
-                true
-            }
-            else -> false
+        if (menuItem.itemId == R.id.action_delete) {
+            deleteSchedule()
+            return true
         }
+        return false
     }
 }

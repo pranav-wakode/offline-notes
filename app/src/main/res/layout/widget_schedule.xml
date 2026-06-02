@@ -3,7 +3,6 @@
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
     android:orientation="vertical"
     android:padding="8dp">
 
@@ -11,7 +10,6 @@
         android:id="@+id/widget_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#0061A4"
         android:padding="8dp"
         android:text="Timetable"
         android:textColor="@android:color/white"

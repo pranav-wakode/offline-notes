@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Color
 import android.widget.RemoteViews
 import com.example.offlinenotes.R
@@ -41,7 +42,6 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
         )
         views.setOnClickPendingIntent(R.id.widget_title, pendingIntent)
 
-        // FIXED: Tell the OS this receiver is doing background work so it doesn't kill it prematurely
         val pendingResult = goAsync()
 
         CoroutineScope(Dispatchers.IO).launch {
@@ -72,35 +72,47 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
     private fun buildGridUI(context: Context, views: RemoteViews, gridDataString: String) {
         views.removeAllViews(R.id.widget_grid_container)
 
+        // Detect Dark/Light Mode dynamically
+        val isNightMode = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+
+        val bgColor = if (isNightMode) Color.parseColor("#121212") else Color.parseColor("#FFFFFF")
+        val headerColor = if (isNightMode) Color.parseColor("#333333") else Color.parseColor("#E0E0E0")
+        val cellColor = if (isNightMode) Color.parseColor("#1E1E1E") else Color.parseColor("#F5F5F5")
+        val textColor = if (isNightMode) Color.WHITE else Color.BLACK
+        val titleBgColor = if (isNightMode) Color.parseColor("#00497D") else Color.parseColor("#0061A4")
+
+        // Apply theme to root and title
+        views.setInt(R.id.widget_root, "setBackgroundColor", bgColor)
+        views.setInt(R.id.widget_title, "setBackgroundColor", titleBgColor)
+
         try {
             val data = Gson().fromJson(gridDataString, ScheduleData::class.java)
 
-            // Limit widget grid to 4x4 so it fits cleanly without scrolling
+            // Limit widget grid to 4x4 so it fits cleanly
             val maxCols = minOf(data.columns.size, 4)
             val maxRows = minOf(data.rows.size, 4)
 
             val headerRow = RemoteViews(context.packageName, R.layout.widget_row)
-            headerRow.addView(R.id.widget_row_container, createCellRemoteView(context, "", true))
+            headerRow.addView(R.id.widget_row_container, createCellRemoteView(context, "", headerColor, textColor, true))
 
             for (c in 0 until maxCols) {
                 val colName = if (c == 3 && data.columns.size > 4) "..." else data.columns[c]
-                headerRow.addView(R.id.widget_row_container, createCellRemoteView(context, colName, true))
+                headerRow.addView(R.id.widget_row_container, createCellRemoteView(context, colName, headerColor, textColor, true))
             }
             views.addView(R.id.widget_grid_container, headerRow)
 
             for (r in 0 until maxRows) {
                 val dataRow = RemoteViews(context.packageName, R.layout.widget_row)
                 val rowName = if (r == 3 && data.rows.size > 4) "..." else data.rows[r]
-                dataRow.addView(R.id.widget_row_container, createCellRemoteView(context, rowName, true))
+                dataRow.addView(R.id.widget_row_container, createCellRemoteView(context, rowName, headerColor, textColor, true))
 
                 for (c in 0 until maxCols) {
                     if (r == 3 && data.rows.size > 4 || c == 3 && data.columns.size > 4) {
-                        dataRow.addView(R.id.widget_row_container, createCellRemoteView(context, "...", false))
+                        dataRow.addView(R.id.widget_row_container, createCellRemoteView(context, "...", cellColor, textColor, false))
                     } else {
                         val key = "${r}_${c}"
-                        var content = data.cells[key] ?: ""
-                        if (content.length > 8) content = content.take(6) + ".." // keep widget cells small
-                        dataRow.addView(R.id.widget_row_container, createCellRemoteView(context, content, false))
+                        val content = data.cells[key] ?: ""
+                        dataRow.addView(R.id.widget_row_container, createCellRemoteView(context, content, cellColor, textColor, false))
                     }
                 }
                 views.addView(R.id.widget_grid_container, dataRow)
@@ -111,16 +123,11 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    private fun createCellRemoteView(context: Context, text: String, isHeader: Boolean): RemoteViews {
+    private fun createCellRemoteView(context: Context, text: String, bgColor: Int, textColor: Int, isHeader: Boolean): RemoteViews {
         val cell = RemoteViews(context.packageName, R.layout.widget_cell)
         cell.setTextViewText(R.id.widget_cell_text, text)
-
-        if (isHeader) {
-            cell.setInt(R.id.widget_cell_text, "setBackgroundColor", Color.parseColor("#E0E0E0"))
-        } else {
-            cell.setInt(R.id.widget_cell_text, "setBackgroundColor", Color.parseColor("#F5F5F5"))
-        }
-
+        cell.setTextColor(R.id.widget_cell_text, textColor)
+        cell.setInt(R.id.widget_cell_text, "setBackgroundColor", bgColor)
         return cell
     }
 }

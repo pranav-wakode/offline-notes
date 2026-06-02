@@ -13,12 +13,14 @@ import com.example.offlinenotes.ui.activity.MainActivity
 
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val title = intent.getStringExtra("title") ?: "Reminder"
-        val noteId = intent.getIntExtra("noteId", -1)
+        // Extract rich data from the alarm intent
+        val title = intent.getStringExtra("title") ?: "Note Reminder"
+        val content = intent.getStringExtra("content") ?: "You have a scheduled note."
+        val noteId = intent.getIntExtra("noteId", 0)
+        val reminderId = intent.getIntExtra("reminderId", -1)
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Create channel for Android O and above
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
@@ -30,27 +32,28 @@ class ReminderReceiver : BroadcastReceiver() {
             notificationManager.createNotificationChannel(channel)
         }
 
-        // Tap action to open the app
+        // Tap action to open the specific note
         val contentIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("noteId", noteId) // Pass the note ID to MainActivity
         }
         val pendingIntent = PendingIntent.getActivity(
             context,
-            noteId, // Use noteId as request code for uniqueness
+            reminderId,
             contentIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_app_logo) // Using existing logo
-            .setContentTitle("⏰ Note Reminder")
-            .setContentText(title)
+            .setSmallIcon(R.drawable.ic_app_logo)
+            .setContentTitle("⏰ $title")
+            .setContentText(content)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(content)) // Allow expanding text
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
 
-        // Notify
-        notificationManager.notify(noteId, builder.build())
+        notificationManager.notify(reminderId, builder.build())
     }
 
     companion object {

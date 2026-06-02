@@ -60,7 +60,6 @@ class NoteListFragment : Fragment(), MenuProvider {
 
         setupRecyclerViews(view)
 
-        // FAB INTERACTION: Pass the current active folder down to the editor via SafeArgs
         view.findViewById<FloatingActionButton>(R.id.fab_add_note).setOnClickListener {
             val activeFolderId = noteViewModel.getCurrentFolderId()
             val newNote = Note(id = 0, title = "", content = "", folderId = activeFolderId)
@@ -71,8 +70,13 @@ class NoteListFragment : Fragment(), MenuProvider {
         noteViewModel.displayNotes.observe(viewLifecycleOwner) { notes ->
             notes?.let { noteAdapter.submitList(it) }
         }
+
         noteViewModel.allFolders.observe(viewLifecycleOwner) { folders ->
-            folders?.let { folderAdapter.submitList(it) }
+            folders?.let {
+                folderAdapter.submitList(it)
+                // Pass folders to NoteAdapter so it can show faded folder names
+                noteAdapter.setFolders(it)
+            }
         }
 
         return view

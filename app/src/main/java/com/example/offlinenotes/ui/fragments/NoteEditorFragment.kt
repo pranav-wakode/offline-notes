@@ -58,7 +58,6 @@ class NoteEditorFragment : Fragment(), MenuProvider {
     private lateinit var bulletManager: BulletManager
     private var isVaultNote = false
 
-    // Request notification permission for Android 13+
     private val requestNotificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
@@ -179,8 +178,6 @@ class NoteEditorFragment : Fragment(), MenuProvider {
                 }
 
                 val reminderId = Random.nextInt(10000, 99999)
-
-                // FIXED: Simplified, human-readable bullet format
                 val dateFormat = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
                 val formatted = "⏰ ${dateFormat.format(scheduledTime.time)}"
 
@@ -194,10 +191,20 @@ class NoteEditorFragment : Fragment(), MenuProvider {
     private fun scheduleOfflineAlarm(timeInMillis: Long, reminderId: Int) {
         val titleText = etTitle.text.toString().takeIf { it.isNotBlank() } ?: "Scheduled Note"
 
+        // Grab a snippet of the content to display in the notification
+        val rawContent = etContent.text.toString()
+        val contentText = if (rawContent.isNotBlank()) {
+            if (rawContent.length > 100) rawContent.take(97) + "..." else rawContent
+        } else {
+            "Open to view your note."
+        }
+
         val alarmManager = requireContext().getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(requireContext(), ReminderReceiver::class.java).apply {
             putExtra("title", titleText)
-            putExtra("noteId", reminderId)
+            putExtra("content", contentText)
+            putExtra("noteId", currentNote?.id ?: 0)
+            putExtra("reminderId", reminderId)
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
@@ -297,6 +304,22 @@ class NoteEditorFragment : Fragment(), MenuProvider {
         findNavController().navigateUp()
     }
 
+    // FIXED: Properly implement the AlertDialog for deletion
+    private fun deleteNote() {
+        currentNote?.let {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Delete Note")
+                .setMessage("Are you sure you want to delete this note?")
+                .setPositiveButton("Delete") { _, _ ->
+                    viewModel.delete(it)
+                    Toast.makeText(context, "Note deleted", Toast.LENGTH_SHORT).show()
+                    findNavController().navigateUp()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+    }
+
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
         if (currentNote != null && currentNote?.id != 0) {
             menuInflater.inflate(R.menu.editor_menu, menu)
@@ -305,10 +328,7 @@ class NoteEditorFragment : Fragment(), MenuProvider {
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         if (menuItem.itemId == R.id.action_delete) {
-            currentNote?.let {
-                viewModel.delete(it)
-                findNavController().navigateUp()
-            }
+            deleteNote()
             return true
         }
         return false

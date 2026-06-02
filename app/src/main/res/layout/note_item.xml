@@ -6,10 +6,12 @@
     android:id="@+id/note_card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="4dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp"
-    app:contentPadding="12dp">
+    android:layout_margin="6dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="?attr/colorOutlineVariant"
+    app:contentPadding="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -17,10 +19,24 @@
         android:orientation="vertical">
 
         <TextView
+            android:id="@+id/tv_note_folder_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textStyle="italic"
+            android:alpha="0.7"
+            android:visibility="gone"
+            tools:visibility="visible"
+            tools:text="Work" />
+
+        <TextView
             android:id="@+id/tv_note_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+            android:textColor="?android:attr/textColorPrimary"
             android:textStyle="bold"
             android:maxLines="2"
             android:ellipsize="end"
@@ -32,17 +48,19 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            android:textColor="?android:attr/textColorSecondary"
             android:maxLines="5"
             android:ellipsize="end"
-            tools:text="This is a preview of the note content. It can span multiple lines but will be cut off." />
+            tools:text="Preview of the note content goes here." />
 
         <TextView
             android:id="@+id/tv_note_date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+            android:textColor="?android:attr/textColorTertiary"
             tools:text="May 21, 2024" />
 
     </LinearLayout>
