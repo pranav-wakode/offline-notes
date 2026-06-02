@@ -72,7 +72,7 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
     private fun buildGridUI(context: Context, views: RemoteViews, gridDataString: String) {
         views.removeAllViews(R.id.widget_grid_container)
 
-        // Detect Dark/Light Mode dynamically
+        // Dynamically detect Dark/Light Mode for the widget
         val isNightMode = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
 
         val bgColor = if (isNightMode) Color.parseColor("#121212") else Color.parseColor("#FFFFFF")
@@ -81,39 +81,31 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
         val textColor = if (isNightMode) Color.WHITE else Color.BLACK
         val titleBgColor = if (isNightMode) Color.parseColor("#00497D") else Color.parseColor("#0061A4")
 
-        // Apply theme to root and title
         views.setInt(R.id.widget_root, "setBackgroundColor", bgColor)
         views.setInt(R.id.widget_title, "setBackgroundColor", titleBgColor)
 
         try {
             val data = Gson().fromJson(gridDataString, ScheduleData::class.java)
 
-            // Limit widget grid to 4x4 so it fits cleanly
-            val maxCols = minOf(data.columns.size, 4)
-            val maxRows = minOf(data.rows.size, 4)
-
+            // Generate the Header Row
             val headerRow = RemoteViews(context.packageName, R.layout.widget_row)
             headerRow.addView(R.id.widget_row_container, createCellRemoteView(context, "", headerColor, textColor, true))
 
-            for (c in 0 until maxCols) {
-                val colName = if (c == 3 && data.columns.size > 4) "..." else data.columns[c]
+            // Iterate through ALL columns (removing the artificial limit)
+            data.columns.forEach { colName ->
                 headerRow.addView(R.id.widget_row_container, createCellRemoteView(context, colName, headerColor, textColor, true))
             }
             views.addView(R.id.widget_grid_container, headerRow)
 
-            for (r in 0 until maxRows) {
+            // Generate ALL Data Rows (removing the artificial limit)
+            data.rows.forEachIndexed { rowIndex, rowName ->
                 val dataRow = RemoteViews(context.packageName, R.layout.widget_row)
-                val rowName = if (r == 3 && data.rows.size > 4) "..." else data.rows[r]
                 dataRow.addView(R.id.widget_row_container, createCellRemoteView(context, rowName, headerColor, textColor, true))
 
-                for (c in 0 until maxCols) {
-                    if (r == 3 && data.rows.size > 4 || c == 3 && data.columns.size > 4) {
-                        dataRow.addView(R.id.widget_row_container, createCellRemoteView(context, "...", cellColor, textColor, false))
-                    } else {
-                        val key = "${r}_${c}"
-                        val content = data.cells[key] ?: ""
-                        dataRow.addView(R.id.widget_row_container, createCellRemoteView(context, content, cellColor, textColor, false))
-                    }
+                data.columns.forEachIndexed { colIndex, _ ->
+                    val key = "${rowIndex}_${colIndex}"
+                    val content = data.cells[key] ?: ""
+                    dataRow.addView(R.id.widget_row_container, createCellRemoteView(context, content, cellColor, textColor, false))
                 }
                 views.addView(R.id.widget_grid_container, dataRow)
             }

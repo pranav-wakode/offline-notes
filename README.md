@@ -1,58 +1,64 @@
-# Offline Notes App 📝
+# 📝 OfflineNotesApp
 
-A simple, private, offline-first notes application for Android, built as a lightweight alternative to cloud-based services like Google Keep.
-
-> **Core Philosophy:** Your notes are yours. This app is 100% offline. It has **no internet permission**, no cloud syncing, and no servers. All your data lives and dies on your device.
-
-<p align="center">
-  <img src="screenshots/notes.jpg" width="30%" alt="All Notes"/>
-  <img src="screenshots/new_note.jpg" width="30%" alt="New Note"/>
-  <img src="screenshots/edit_note.jpg" width="30%" alt="Edit Note"/>
-</p>
+A powerful, secure, and privacy-first Android note-taking application. OfflineNotesApp is designed to be completely cloud-free, keeping all your data locally on your device while offering advanced features like dynamic timetables, AES-256 encrypted vaults, and offline alarm reminders.
 
 ---
 
 ## ✨ Features
 
-### 📝 Smart Editing & Organization
-* **Rich Editor:** Create and update notes with a clean, distraction-free interface.
-* **Auto-Bullets:** The editor automatically formats new lines with bullet points for structured note-taking.
-* **CRUD Operations:** Seamlessly create, read, update, and delete notes.
-
-### 🔍 Search & Management
-* **Instant Search:** Quickly filter notes by title or content.
-    <br><img src="screenshots/search.jpg" width="30%" alt="Search">
-* **Delete Protection:** Confirmation dialogs to prevent accidental deletion.
-    <br><img src="screenshots/delete_note.jpg" width="30%" alt="Delete">
-
-### 💾 Data & Privacy
-* **100% Offline:** Uses Room Database for secure, fast, and reliable local storage.
-* **Import/Export:** Portable data! Backup your notes to a JSON file and restore them on any device.
-    <br><img src="screenshots/import_export.jpg" width="30%" alt="Import Export">
-* **Persistent:** Data is saved instantly and survives app closures and device restarts.
+* **🗂️ Smart Folder Organization:** Categorize your notes effortlessly. Features horizontally scrollable folder chips, intuitive active-folder inheritance when creating new notes, and transparent note-moving upon folder deletion.
+* **✅ Advanced Bullet System:** A custom plain-text parsing engine supporting standard bullets, interactive checkboxes, and time-triggered `⏰` alarm reminders directly inside the editor.
+* **🔔 Offline Notifications:** Deep integration with Android's `AlarmManager`. Set precise reminders inside your notes that trigger rich notifications with deep-linking capabilities—no internet required.
+* **🗓️ Dynamic Timetable Module:** Create and manage 2D schedule grids. The intuitive `TableLayout` editor automatically balances rows and columns for a clean look.
+* **📱 Native Home Screen Widget:** Keep your schedule at a glance. A responsive, theme-aware Android AppWidget that dynamically renders your most recent timetable directly on your launcher.
+* **🔒 Secure Vault:** Lock sensitive notes behind military-grade AES-256-GCM encryption with PBKDF2 key derivation. Your master password is never stored, and data is encrypted seamlessly on the fly.
+* **💾 Universal JSON Backups:** Complete data portability. Export and import your entire database—including standard notes, schedules, and your encrypted vault state—into a single, highly interoperable JSON file.
+* **🌗 Adaptive Theming:** Fully supports system-level Dark and Light modes using Android's Material Design `colorSurfaceVariant` architecture.
 
 ---
 
-## 🛠️ Tech Stack & Architecture
+## 📸 Screenshots
 
-This project follows modern Android development best practices, emphasizing a clean and scalable architecture.
+| All Notes | Folder Filtering | Search |
+| :---: | :---: | :---: |
+| <img src="screenshots/Home.jpg" width="250"/> | <img src="screenshots/_folder.jpg" width="250"/> | <img src="screenshots/search.jpg" width="250"/> |
 
-* **Language:** **Kotlin**
-* **Architecture:** **MVVM (Model-View-ViewModel)**
-    * **Model:** `Note` entity & `NoteRepository`.
-    * **View:** `MainActivity`, `NoteListFragment`, `NoteEditorFragment`.
-    * **ViewModel:** `NoteViewModel` for UI state management.
-* **Database:** **Room Database** (SQLite)
-* **Asynchronous:** **Kotlin Coroutines** & **LiveData**
-* **Navigation:** **Jetpack Navigation Component**
-* **Serialization:** **Gson** (for JSON Import/Export)
-* **UI:** **XML Layouts** with `RecyclerView` & `StaggeredGridLayoutManager`
+| Note Editor | Advanced Alarms & Bullets | Menu & Data Management |
+| :---: | :---: | :---: |
+| <img src="screenshots/new_note.jpg" width="250"/> | <img src="screenshots/bullet_types.jpg" width="250"/> | <img src="screenshots/import_export_addFolder.jpg" width="250"/> |
+
+| Dynamic Schedules | Home Screen Widget |
+| :---: | :---: |
+| <img src="screenshots/schedules.jpg" width="250"/> | <img src="screenshots/widget.jpg" width="250"/> |
+
+| Secure Vault | Vault Authentication |
+| :---: | :---: |
+| <img src="screenshots/secure_vault.jpg" width="250"/> | <img src="screenshots/unlock_vault.jpg" width="250"/> |
 
 ---
 
-## 🚀 How to Build
+## 🛠️ Technical Stack
 
-1.  **Clone** the repository.
-2.  **Open** the `OfflineNotesApp` directory in Android Studio.
-3.  Let Gradle sync all the dependencies.
-4.  **Run** the app on an emulator or a physical Android device (Android 8.0+).
+* **Language:** Kotlin
+* **Architecture:** MVVM (Model-View-ViewModel)
+* **Local Storage:** Android Room Database (SQLite)
+* **Navigation:** Android Jetpack Navigation Component
+* **Cryptography:** Java Cryptography Architecture (`javax.crypto`), AES/GCM/NoPadding
+* **Background Tasks:** `AlarmManager` & `BroadcastReceiver`
+* **Serialization:** Google Gson
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+* Android Studio Ladybug (or newer)
+* Android SDK 34+
+* A physical Android device or Emulator (API 24+)
+
+### Installation
+1. Clone the repository to your local machine.
+2. Open the project folder (`OfflineNotesApp`) in Android Studio.
+3. Sync the project with Gradle files.
+4. Run a **Clean Project** -> **Rebuild Project** to ensure Room auto-generates the database schemas.
+5. Click **Run** to deploy to your device.

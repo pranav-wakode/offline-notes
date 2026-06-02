@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
+import android.util.TypedValue
 import android.view.*
 import android.widget.Button
 import android.widget.EditText
@@ -54,7 +55,6 @@ class ScheduleEditorFragment : Fragment(), MenuProvider {
         etTitle = view.findViewById(R.id.et_schedule_title)
         tableLayout = view.findViewById(R.id.table_layout_grid)
 
-        // Force the TableLayout to stretch columns to fit evenly
         tableLayout.isStretchAllColumns = true
 
         currentSchedule = args.schedule
@@ -122,14 +122,21 @@ class ScheduleEditorFragment : Fragment(), MenuProvider {
         tv.text = text
         tv.setPadding(24, 24, 24, 24)
 
-        // FIXED: Using layout_weight=1f ensures balanced cells
         val params = TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f)
         params.setMargins(4, 4, 4, 4)
         tv.layoutParams = params
 
+        val typedValue = TypedValue()
+        requireContext().theme.resolveAttribute(com.google.android.material.R.attr.colorOnSurface, typedValue, true)
+        tv.setTextColor(typedValue.data)
+
         if (isHeader) {
-            tv.setBackgroundColor(Color.parseColor("#E0E0E0"))
-            tv.setTextColor(Color.BLACK)
+            requireContext().theme.resolveAttribute(com.google.android.material.R.attr.colorSurfaceVariant, typedValue, true)
+            tv.setBackgroundColor(typedValue.data)
+            tv.setTypeface(null, android.graphics.Typeface.BOLD)
+        } else {
+            requireContext().theme.resolveAttribute(com.google.android.material.R.attr.colorSurface, typedValue, true)
+            tv.setBackgroundColor(typedValue.data)
         }
         return tv
     }
@@ -140,17 +147,23 @@ class ScheduleEditorFragment : Fragment(), MenuProvider {
         et.setPadding(24, 24, 24, 24)
         et.gravity = Gravity.TOP or Gravity.START
         et.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
-        et.setBackgroundResource(android.R.drawable.edit_text)
         et.minLines = 2
 
-        // FIXED: Using layout_weight=1f ensures balanced cells
         val params = TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f)
         params.setMargins(4, 4, 4, 4)
         et.layoutParams = params
 
+        val typedValue = TypedValue()
+        requireContext().theme.resolveAttribute(com.google.android.material.R.attr.colorOnSurface, typedValue, true)
+        et.setTextColor(typedValue.data)
+
         if (isHeader) {
-            et.setBackgroundColor(Color.parseColor("#F5F5F5"))
+            requireContext().theme.resolveAttribute(com.google.android.material.R.attr.colorSurfaceVariant, typedValue, true)
+            et.setBackgroundColor(typedValue.data)
             et.setTypeface(null, android.graphics.Typeface.BOLD)
+        } else {
+            requireContext().theme.resolveAttribute(com.google.android.material.R.attr.colorSurface, typedValue, true)
+            et.setBackgroundColor(typedValue.data)
         }
 
         et.addTextChangedListener(object : TextWatcher {
