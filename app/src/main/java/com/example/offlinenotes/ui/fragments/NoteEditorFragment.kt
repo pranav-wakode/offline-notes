@@ -1,11 +1,13 @@
 package com.example.offlinenotes.ui.fragments
 
+import android.Manifest
 import android.app.AlarmManager
 import android.app.DatePickerDialog
 import android.app.PendingIntent
 import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -16,7 +18,9 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.Spinner
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
@@ -54,6 +58,17 @@ class NoteEditorFragment : Fragment(), MenuProvider {
     private lateinit var bulletManager: BulletManager
     private var isVaultNote = false
 
+    // Request notification permission for Android 13+
+    private val requestNotificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            checkExactAlarmPermission()
+        } else {
+            Toast.makeText(context, "Notifications disabled. Alarms won't show.", Toast.LENGTH_LONG).show()
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -72,7 +87,6 @@ class NoteEditorFragment : Fragment(), MenuProvider {
 
         currentNote = args.note
 
-        // If the note has an ID of 0, it means it was passed explicitly as a dummy holder for folderId / isVault state
         currentNote?.let {
             isVaultNote = it.isVault
             etTitle.setText(it.title)
@@ -120,13 +134,21 @@ class NoteEditorFragment : Fragment(), MenuProvider {
         btnDate.setOnClickListener {
             val calendar = Calendar.getInstance()
             DatePickerDialog(requireContext(), { _, year, month, dayOfMonth ->
-                val formatted = String.format(Locale.getDefault(), "📅 [%04d-%02d-%02d]", year, month + 1, dayOfMonth)
+                val formatted = String.format(Locale.getDefault(), "📅 %04d-%02d-%02d", year, month + 1, dayOfMonth)
                 bulletManager.insertDateOrReminder(formatted)
             }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()
         }
 
         btnReminder.setOnClickListener {
-            checkExactAlarmPermission()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                    checkExactAlarmPermission()
+                } else {
+                    requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            } else {
+                checkExactAlarmPermission()
+            }
         }
     }
 
@@ -157,8 +179,10 @@ class NoteEditorFragment : Fragment(), MenuProvider {
                 }
 
                 val reminderId = Random.nextInt(10000, 99999)
-                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-                val formatted = "⏰ [${dateFormat.format(scheduledTime.time)}|ID:$reminderId]"
+
+                // FIXED: Simplified, human-readable bullet format
+                val dateFormat = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
+                val formatted = "⏰ ${dateFormat.format(scheduledTime.time)}"
 
                 bulletManager.insertDateOrReminder(formatted)
                 scheduleOfflineAlarm(scheduledTime.timeInMillis, reminderId)
@@ -230,7 +254,6 @@ class NoteEditorFragment : Fragment(), MenuProvider {
         var finalContent = rawContent
         var finalIv: String? = currentNote?.iv
 
-        // Security Protocol: Encrypt on the fly
         if (isVaultNote) {
             if (!viewModel.vaultManager.isVaultUnlocked) {
                 Toast.makeText(context, "Cannot save secure note while vault is locked.", Toast.LENGTH_LONG).show()
@@ -247,7 +270,6 @@ class NoteEditorFragment : Fragment(), MenuProvider {
         val selectedPos = spinnerFolder.selectedItemPosition
         val folderId = if (selectedPos > 0) folderList[selectedPos - 1].id else null
 
-        // If currentNote is null or its ID is 0, it means it's a NEW note.
         val isNewNote = currentNote == null || currentNote?.id == 0
 
         val updatedNote = currentNote?.copy(
@@ -276,7 +298,6 @@ class NoteEditorFragment : Fragment(), MenuProvider {
     }
 
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-        // Only show delete menu if note exists and is not a dummy Note (id != 0)
         if (currentNote != null && currentNote?.id != 0) {
             menuInflater.inflate(R.menu.editor_menu, menu)
         }

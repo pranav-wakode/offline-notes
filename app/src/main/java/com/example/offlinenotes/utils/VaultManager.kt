@@ -15,9 +15,6 @@ class VaultManager(context: Context) {
 
     private val prefs: SharedPreferences = context.getSharedPreferences("vault_prefs", Context.MODE_PRIVATE)
 
-    // Kept strictly in memory. Cleared on lock.
-    private var sessionKey: SecretKey? = null
-
     val isVaultSetup: Boolean
         get() = prefs.contains(KEY_SALT) && prefs.contains(KEY_VERIFICATION)
 
@@ -62,7 +59,6 @@ class VaultManager(context: Context) {
                 false
             }
         } catch (e: Exception) {
-            // AEADBadTagException or other crypto failure = wrong password
             false
         }
     }
@@ -87,7 +83,6 @@ class VaultManager(context: Context) {
         return decrypt(ciphertext, key, iv)
     }
 
-    // Export & Import helpers
     fun getVaultSalt(): String? = prefs.getString(KEY_SALT, null)
     fun getVaultVerificationToken(): String? = prefs.getString(KEY_VERIFICATION, null)
     fun getVaultVerificationIv(): String? = prefs.getString(KEY_VERIFICATION_IV, null)
@@ -98,7 +93,7 @@ class VaultManager(context: Context) {
             .putString(KEY_VERIFICATION, token)
             .putString(KEY_VERIFICATION_IV, iv)
             .apply()
-        lockVault() // Explicitly require password entry after restore
+        lockVault()
     }
 
     private fun deriveKey(password: String, salt: ByteArray): SecretKey {
@@ -110,7 +105,7 @@ class VaultManager(context: Context) {
 
     private fun encrypt(plaintext: String, key: SecretKey): Pair<ByteArray, ByteArray> {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        val iv = ByteArray(12) // GCM standard IV size
+        val iv = ByteArray(12)
         SecureRandom().nextBytes(iv)
         val spec = GCMParameterSpec(TAG_LENGTH, iv)
         cipher.init(Cipher.ENCRYPT_MODE, key, spec)
@@ -127,7 +122,10 @@ class VaultManager(context: Context) {
     }
 
     companion object {
-        private const val ITERATIONS = 600000 // Industry standard PBKDF2 iterations
+        // FIXED: Elevated to static companion so all fragments share the same unlock state
+        private var sessionKey: SecretKey? = null
+
+        private const val ITERATIONS = 600000
         private const val KEY_LENGTH = 256
         private const val TAG_LENGTH = 128
         private const val VERIFICATION_PLAIN = "VAULT_AUTH_VALID"

@@ -32,7 +32,6 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
     private fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
         val views = RemoteViews(context.packageName, R.layout.widget_schedule)
 
-        // Launch app on title click
         val intent = Intent(context, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
             context,
@@ -42,25 +41,30 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
         )
         views.setOnClickPendingIntent(R.id.widget_title, pendingIntent)
 
-        // Fetch data asynchronously
+        // FIXED: Tell the OS this receiver is doing background work so it doesn't kill it prematurely
+        val pendingResult = goAsync()
+
         CoroutineScope(Dispatchers.IO).launch {
-            val database = NoteDatabase.getDatabase(context)
-            val schedules = database.getScheduleDao().getAllSchedulesSync()
+            try {
+                val database = NoteDatabase.getDatabase(context)
+                val schedules = database.getScheduleDao().getAllSchedulesSync()
 
-            withContext(Dispatchers.Main) {
-                if (schedules.isNotEmpty()) {
-                    // Grab the most recently modified schedule
-                    val latestSchedule = schedules.maxByOrNull { it.modifiedAt }
-                    latestSchedule?.let {
-                        views.setTextViewText(R.id.widget_title, "🗓️ ${it.name}")
-                        buildGridUI(context, views, it.gridData)
+                withContext(Dispatchers.Main) {
+                    if (schedules.isNotEmpty()) {
+                        val latestSchedule = schedules.maxByOrNull { it.modifiedAt }
+                        latestSchedule?.let {
+                            views.setTextViewText(R.id.widget_title, "🗓️ ${it.name}")
+                            buildGridUI(context, views, it.gridData)
+                        }
+                    } else {
+                        views.setTextViewText(R.id.widget_title, "No Schedules Found")
+                        views.removeAllViews(R.id.widget_grid_container)
                     }
-                } else {
-                    views.setTextViewText(R.id.widget_title, "No Schedules Found")
-                    views.removeAllViews(R.id.widget_grid_container)
-                }
 
-                appWidgetManager.updateAppWidget(appWidgetId, views)
+                    appWidgetManager.updateAppWidget(appWidgetId, views)
+                }
+            } finally {
+                pendingResult.finish()
             }
         }
     }
@@ -71,24 +75,33 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
         try {
             val data = Gson().fromJson(gridDataString, ScheduleData::class.java)
 
-            // Header Row - using our new custom layout
+            // Limit widget grid to 4x4 so it fits cleanly without scrolling
+            val maxCols = minOf(data.columns.size, 4)
+            val maxRows = minOf(data.rows.size, 4)
+
             val headerRow = RemoteViews(context.packageName, R.layout.widget_row)
             headerRow.addView(R.id.widget_row_container, createCellRemoteView(context, "", true))
 
-            data.columns.forEach { colName ->
+            for (c in 0 until maxCols) {
+                val colName = if (c == 3 && data.columns.size > 4) "..." else data.columns[c]
                 headerRow.addView(R.id.widget_row_container, createCellRemoteView(context, colName, true))
             }
             views.addView(R.id.widget_grid_container, headerRow)
 
-            // Data Rows
-            data.rows.forEachIndexed { rowIndex, rowName ->
+            for (r in 0 until maxRows) {
                 val dataRow = RemoteViews(context.packageName, R.layout.widget_row)
+                val rowName = if (r == 3 && data.rows.size > 4) "..." else data.rows[r]
                 dataRow.addView(R.id.widget_row_container, createCellRemoteView(context, rowName, true))
 
-                data.columns.forEachIndexed { colIndex, _ ->
-                    val key = "${rowIndex}_${colIndex}"
-                    val content = data.cells[key] ?: ""
-                    dataRow.addView(R.id.widget_row_container, createCellRemoteView(context, content, false))
+                for (c in 0 until maxCols) {
+                    if (r == 3 && data.rows.size > 4 || c == 3 && data.columns.size > 4) {
+                        dataRow.addView(R.id.widget_row_container, createCellRemoteView(context, "...", false))
+                    } else {
+                        val key = "${r}_${c}"
+                        var content = data.cells[key] ?: ""
+                        if (content.length > 8) content = content.take(6) + ".." // keep widget cells small
+                        dataRow.addView(R.id.widget_row_container, createCellRemoteView(context, content, false))
+                    }
                 }
                 views.addView(R.id.widget_grid_container, dataRow)
             }
@@ -99,7 +112,6 @@ class ScheduleWidgetProvider : AppWidgetProvider() {
     }
 
     private fun createCellRemoteView(context: Context, text: String, isHeader: Boolean): RemoteViews {
-        // We inject our custom widget_cell.xml directly into the remote hierarchy dynamically
         val cell = RemoteViews(context.packageName, R.layout.widget_cell)
         cell.setTextViewText(R.id.widget_cell_text, text)
 
