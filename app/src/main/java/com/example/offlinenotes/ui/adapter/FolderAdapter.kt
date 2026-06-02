@@ -1,7 +1,6 @@
 package com.example.offlinenotes.ui.adapter
 
 import android.graphics.Color
-import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.offlinenotes.R
 import com.example.offlinenotes.model.Folder
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.color.MaterialColors
 
 class FolderAdapter(
     private val onFolderClick: (Folder?) -> Unit,
@@ -73,20 +73,21 @@ class FolderAdapter(
         }
 
         private fun setSelectionStyle(isSelected: Boolean) {
-            val context = itemView.context
-            val typedValue = TypedValue()
+            // FIXED: Strictly enforce MaterialColors so it never turns invisible in dark mode
+            val primaryColor = MaterialColors.getColor(itemView, com.google.android.material.R.attr.colorPrimary)
+            val onPrimaryColor = MaterialColors.getColor(itemView, com.google.android.material.R.attr.colorOnPrimary)
+            val surfaceVariant = MaterialColors.getColor(itemView, com.google.android.material.R.attr.colorSurfaceVariant)
+            val onSurfaceVariant = MaterialColors.getColor(itemView, com.google.android.material.R.attr.colorOnSurfaceVariant)
 
             if (isSelected) {
-                context.theme.resolveAttribute(com.google.android.material.R.attr.colorPrimary, typedValue, true)
-                card.setCardBackgroundColor(typedValue.data)
-
-                context.theme.resolveAttribute(com.google.android.material.R.attr.colorOnPrimary, typedValue, true)
-                name.setTextColor(typedValue.data)
+                card.setCardBackgroundColor(primaryColor)
+                name.setTextColor(onPrimaryColor)
+                card.strokeWidth = 0
             } else {
-                card.setCardBackgroundColor(Color.TRANSPARENT)
-
-                context.theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
-                name.setTextColor(typedValue.data)
+                card.setCardBackgroundColor(surfaceVariant)
+                name.setTextColor(onSurfaceVariant)
+                card.strokeColor = onSurfaceVariant
+                card.strokeWidth = 1
             }
         }
     }

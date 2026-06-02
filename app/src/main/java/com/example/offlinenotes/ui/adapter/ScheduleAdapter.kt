@@ -53,7 +53,6 @@ class ScheduleAdapter(private val listener: (Schedule) -> Unit) : ListAdapter<Sc
             tablePreview.removeAllViews()
             val context = itemView.context
 
-            // Fetch theme colors for borders and text
             val typedValue = TypedValue()
             context.theme.resolveAttribute(com.google.android.material.R.attr.colorOnSurface, typedValue, true)
             val textColor = typedValue.data
@@ -61,35 +60,25 @@ class ScheduleAdapter(private val listener: (Schedule) -> Unit) : ListAdapter<Sc
             context.theme.resolveAttribute(com.google.android.material.R.attr.colorOutlineVariant, typedValue, true)
             val borderColor = typedValue.data
 
-            // Limit preview to 4 rows and 4 columns to keep the list performant and clean
-            val maxCols = minOf(data.columns.size, 4)
-            val maxRows = minOf(data.rows.size, 4)
-
+            // FIXED: Removed the 4x4 limit. Allow the HorizontalScrollView to do its job.
             // Header Row
             val headerRow = TableRow(context)
-            headerRow.addView(createCell("", true, textColor, borderColor)) // Top-left empty
-            for (c in 0 until maxCols) {
-                val colName = if (c == 3 && data.columns.size > 4) "..." else data.columns[c]
-                headerRow.addView(createCell(colName, true, textColor, borderColor))
+            headerRow.addView(createCell("", true, textColor, borderColor))
+            for (c in 0 until data.columns.size) {
+                headerRow.addView(createCell(data.columns[c], true, textColor, borderColor))
             }
             tablePreview.addView(headerRow)
 
             // Data Rows
-            for (r in 0 until maxRows) {
+            for (r in 0 until data.rows.size) {
                 val row = TableRow(context)
-                val rowName = if (r == 3 && data.rows.size > 4) "..." else data.rows[r]
-                row.addView(createCell(rowName, true, textColor, borderColor))
+                row.addView(createCell(data.rows[r], true, textColor, borderColor))
 
-                for (c in 0 until maxCols) {
-                    if (r == 3 && data.rows.size > 4 || c == 3 && data.columns.size > 4) {
-                        row.addView(createCell("...", false, textColor, borderColor))
-                    } else {
-                        val key = "${r}_${c}"
-                        val content = data.cells[key] ?: ""
-                        // Truncate long content for preview
-                        val displayContent = if (content.length > 15) content.take(12) + "..." else content
-                        row.addView(createCell(displayContent, false, textColor, borderColor))
-                    }
+                for (c in 0 until data.columns.size) {
+                    val key = "${r}_${c}"
+                    val content = data.cells[key] ?: ""
+                    val displayContent = if (content.length > 15) content.take(12) + "..." else content
+                    row.addView(createCell(displayContent, false, textColor, borderColor))
                 }
                 tablePreview.addView(row)
             }
@@ -107,9 +96,6 @@ class ScheduleAdapter(private val listener: (Schedule) -> Unit) : ListAdapter<Sc
             if (isHeader) {
                 tv.setTypeface(null, android.graphics.Typeface.BOLD)
             }
-
-            // Programmatic border using a ShapeDrawable or simple background manipulation
-            // For a fast preview, we just use margins inside the TableRow dividers
             return tv
         }
     }
